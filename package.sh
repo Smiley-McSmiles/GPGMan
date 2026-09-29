@@ -549,27 +549,8 @@ build_appimage() {
         ln -sf gpgman-icon.svg "${APPDIR}/.DirIcon"
     fi
 
-    # AppStream metadata
-    cat <<'EOF' > "${APPDIR}/usr/share/metainfo/gpgman.appdata.xml"
-<?xml version="1.0" encoding="UTF-8"?>
-<component type="desktop-application">
-  <id>org.gpgman.GpgMan</id>
-  <metadata_license>CC0-1.0</metadata_license>
-  <project_license>MIT</project_license>
-  <name>GPGMan</name>
-  <summary>Dual-Style OpenPGP Cryptographic Suite (GUI &amp; CLI)</summary>
-  <description>
-    <p>
-      GPGMan is a modern GTK4 and Libadwaita OpenPGP cryptographic management tool
-      with full 1:1 terminal CLI parity.
-    </p>
-  </description>
-  <launchable type="desktop-id">gpgman.desktop</launchable>
-  <url type="homepage">https://github.com/Smiley-McSmiles/GPGMan</url>
-  <url type="bugtracker">https://github.com/Smiley-McSmiles/GPGMan/issues</url>
-  <developer_name>WOOSAH</developer_name>
-</component>
-EOF
+    # Avoid appstreamcli validation aborts across varying host distro versions
+    rm -rf "${APPDIR}/usr/share/metainfo"
 
     # Create AppRun bootstrap script
     cat <<'EOF' > "${APPDIR}/AppRun"
