@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=GPGMan
+GenericName=GPG Key Manager & Crypto Tool
+Comment=Manage GPG keys, encrypt & decrypt messages and files, and sign & verify digital signatures
+Exec=gpgman
+Icon=gpgman-icon
+Terminal=false
+Type=Application
+Categories=Utility;Security;System;GTK;
+StartupNotify=true
+Keywords=GPG;PGP;Cryptography;Encryption;Signature;Keyring;Libadwaita;GTK4;
