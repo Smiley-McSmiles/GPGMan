@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="1.3.0"
+VERSION="1.3.1"
 APP_NAME="gpgman"
 PKG_NAME="gpgman"
 SUMMARY="Dual-style GTK4/Libadwaita GUI and CLI OpenPGP & GnuPG Suite"
@@ -74,12 +74,15 @@ build_deb() {
     mkdir -p "${DEB_ROOT}/usr/share/applications"
     mkdir -p "${DEB_ROOT}/usr/share/icons/hicolor/scalable/apps"
     mkdir -p "${DEB_ROOT}/usr/share/doc/gpgman"
+    mkdir -p "${DEB_ROOT}/usr/share/man/man1"
 
     # Copy application code
     cp -r "${SCRIPT_DIR}/gpgman" "${DEB_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/main.py" "${DEB_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${DEB_ROOT}/opt/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${DEB_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/gpgman.desktop" "${DEB_ROOT}/opt/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${DEB_ROOT}/opt/gpgman/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${DEB_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${DEB_ROOT}/usr/share/doc/gpgman/"
     [ -f "${SCRIPT_DIR}/README.md" ] && cp "${SCRIPT_DIR}/README.md" "${DEB_ROOT}/usr/share/doc/gpgman/"
@@ -93,6 +96,12 @@ build_deb() {
     # Desktop entry & Icon
     sed -e "s|/opt/gpgman|/opt/gpgman|g" "${SCRIPT_DIR}/gpgman.desktop" > "${DEB_ROOT}/usr/share/applications/gpgman.desktop"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${DEB_ROOT}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+
+    # Manual page
+    if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
+        gzip -c -9 "${SCRIPT_DIR}/gpgman.1" > "${DEB_ROOT}/usr/share/man/man1/gpgman.1.gz"
+        ln -sf "gpgman.1.gz" "${DEB_ROOT}/usr/share/man/man1/gpgman-cli.1.gz"
+    fi
 
     # Control File
     cat <<EOF > "${DEB_ROOT}/DEBIAN/control"
@@ -191,11 +200,14 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_datadir}/applications
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/scalable/apps
 mkdir -p %{buildroot}%{_datadir}/doc/gpgman
+mkdir -p %{buildroot}%{_mandir}/man1
 
 cp -r gpgman %{buildroot}/opt/gpgman/
 cp main.py %{buildroot}/opt/gpgman/
 cp gpgman-icon.svg %{buildroot}/opt/gpgman/
+[ -f gpgman-icon.png ] && cp gpgman-icon.png %{buildroot}/opt/gpgman/
 cp gpgman.desktop %{buildroot}/opt/gpgman/
+[ -f gpgman.1 ] && cp gpgman.1 %{buildroot}/opt/gpgman/
 [ -d icons ] && cp -r icons %{buildroot}/opt/gpgman/
 [ -f LICENSE ] && cp LICENSE %{buildroot}%{_datadir}/doc/gpgman/
 [ -f README.md ] && cp README.md %{buildroot}%{_datadir}/doc/gpgman/
@@ -207,6 +219,10 @@ ln -sf /opt/gpgman/main.py %{buildroot}%{_bindir}/gpgman-cli
 
 cp gpgman.desktop %{buildroot}%{_datadir}/applications/gpgman.desktop
 cp gpgman-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/gpgman-icon.svg
+if [ -f gpgman.1 ]; then
+    gzip -c -9 gpgman.1 > %{buildroot}%{_mandir}/man1/gpgman.1.gz
+    ln -sf gpgman.1.gz %{buildroot}%{_mandir}/man1/gpgman-cli.1.gz
+fi
 
 %files
 /opt/gpgman
@@ -214,11 +230,13 @@ cp gpgman-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/gpgman-ic
 %{_bindir}/gpgman-cli
 %{_datadir}/applications/gpgman.desktop
 %{_datadir}/icons/hicolor/scalable/apps/gpgman-icon.svg
+%{_mandir}/man1/gpgman*.1*
 %doc %{_datadir}/doc/gpgman/*
 
 %changelog
 * Mon Sep 28 2026 ${AUTHOR} - 1.3.0-1
 - Release 1.3.0 featuring dual GTK4/Libadwaita GUI and full CLI suite.
+- Release 1.3.1 added ability to press ENTER to encrypt/decrpt with passphrase (GTK)
 EOF
 
     if command -v rpmbuild >/dev/null 2>&1; then
@@ -258,6 +276,7 @@ package() {
     install -d "\${pkgdir}/usr/share/applications"
     install -d "\${pkgdir}/usr/share/icons/hicolor/scalable/apps"
     install -d "\${pkgdir}/usr/share/licenses/\${pkgname}"
+    install -d "\${pkgdir}/usr/share/man/man1"
 
     cp -r "\${srcdir}"/gpgman*/* "\${pkgdir}/opt/gpgman/" 2>/dev/null || true
     chmod +x "\${pkgdir}/opt/gpgman/main.py"
@@ -267,6 +286,7 @@ package() {
 
     install -m644 "\${pkgdir}/opt/gpgman/gpgman.desktop" "\${pkgdir}/usr/share/applications/gpgman.desktop"
     install -m644 "\${pkgdir}/opt/gpgman/gpgman-icon.svg" "\${pkgdir}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    [ -f "\${pkgdir}/opt/gpgman/gpgman.1" ] && install -m644 "\${pkgdir}/opt/gpgman/gpgman.1" "\${pkgdir}/usr/share/man/man1/gpgman.1" && ln -sf gpgman.1 "\${pkgdir}/usr/share/man/man1/gpgman-cli.1"
     [ -f "\${pkgdir}/opt/gpgman/LICENSE" ] && install -m644 "\${pkgdir}/opt/gpgman/LICENSE" "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
 }
 EOF
@@ -281,11 +301,14 @@ EOF
     mkdir -p "${PKG_ROOT}/usr/share/applications"
     mkdir -p "${PKG_ROOT}/usr/share/icons/hicolor/scalable/apps"
     mkdir -p "${PKG_ROOT}/usr/share/licenses/gpgman"
+    mkdir -p "${PKG_ROOT}/usr/share/man/man1"
 
     cp -r "${SCRIPT_DIR}/gpgman" "${PKG_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/main.py" "${PKG_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${PKG_ROOT}/opt/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${PKG_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/gpgman.desktop" "${PKG_ROOT}/opt/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${PKG_ROOT}/opt/gpgman/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${PKG_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${PKG_ROOT}/usr/share/licenses/gpgman/LICENSE"
 
@@ -294,6 +317,10 @@ EOF
     ln -sf /opt/gpgman/main.py "${PKG_ROOT}/usr/bin/gpgman-cli"
     cp "${SCRIPT_DIR}/gpgman.desktop" "${PKG_ROOT}/usr/share/applications/gpgman.desktop"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${PKG_ROOT}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
+        cp "${SCRIPT_DIR}/gpgman.1" "${PKG_ROOT}/usr/share/man/man1/gpgman.1"
+        ln -sf gpgman.1 "${PKG_ROOT}/usr/share/man/man1/gpgman-cli.1"
+    fi
 
     # .PKGINFO for pacman
     cat <<EOF > "${PKG_ROOT}/.PKGINFO"
@@ -337,12 +364,15 @@ build_openbsd() {
     mkdir -p "${OBSD_ROOT}/usr/local/share/applications"
     mkdir -p "${OBSD_ROOT}/usr/local/share/icons/hicolor/scalable/apps"
     mkdir -p "${OBSD_ROOT}/usr/local/share/doc/gpgman"
+    mkdir -p "${OBSD_ROOT}/usr/local/man/man1"
 
     # Copy files
     cp -r "${SCRIPT_DIR}/gpgman" "${OBSD_ROOT}/usr/local/share/gpgman/"
     cp "${SCRIPT_DIR}/main.py" "${OBSD_ROOT}/usr/local/share/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${OBSD_ROOT}/usr/local/share/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${OBSD_ROOT}/usr/local/share/gpgman/"
     cp "${SCRIPT_DIR}/gpgman.desktop" "${OBSD_ROOT}/usr/local/share/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${OBSD_ROOT}/usr/local/share/gpgman/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${OBSD_ROOT}/usr/local/share/gpgman/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${OBSD_ROOT}/usr/local/share/doc/gpgman/"
     [ -f "${SCRIPT_DIR}/README.md" ] && cp "${SCRIPT_DIR}/README.md" "${OBSD_ROOT}/usr/local/share/doc/gpgman/"
@@ -352,6 +382,10 @@ build_openbsd() {
     ln -sf /usr/local/share/gpgman/main.py "${OBSD_ROOT}/usr/local/bin/gpgman-cli"
     sed -e "s|/opt/gpgman|/usr/local/share/gpgman|g" "${SCRIPT_DIR}/gpgman.desktop" > "${OBSD_ROOT}/usr/local/share/applications/gpgman.desktop"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${OBSD_ROOT}/usr/local/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
+        cp "${SCRIPT_DIR}/gpgman.1" "${OBSD_ROOT}/usr/local/man/man1/gpgman.1"
+        ln -sf gpgman.1 "${OBSD_ROOT}/usr/local/man/man1/gpgman-cli.1"
+    fi
 
     # Packing list for OpenBSD (+CONTENTS)
     cat <<EOF > "${OBSD_ROOT}/+CONTENTS"
@@ -446,6 +480,7 @@ do_install() {
 
     vinstall gpgman.desktop 644 usr/share/applications/
     vinstall gpgman-icon.svg 644 usr/share/icons/hicolor/scalable/apps/
+    [ -f gpgman.1 ] && vman gpgman.1
     vlicense LICENSE
 }
 EOF
@@ -470,7 +505,9 @@ build_tar() {
     cp "${SCRIPT_DIR}/install.sh" "${TAR_ROOT}/"
     cp "${SCRIPT_DIR}/package.sh" "${TAR_ROOT}/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${TAR_ROOT}/"
+    [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${TAR_ROOT}/"
     cp "${SCRIPT_DIR}/gpgman.desktop" "${TAR_ROOT}/"
+    [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${TAR_ROOT}/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${TAR_ROOT}/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${TAR_ROOT}/"
     [ -f "${SCRIPT_DIR}/README.md" ] && cp "${SCRIPT_DIR}/README.md" "${TAR_ROOT}/"
@@ -495,7 +532,7 @@ build_appimage() {
     mkdir -p "${APPDIR}/usr/share/icons/hicolor/256x256/apps"
     mkdir -p "${APPDIR}/usr/share/pixmaps"
     mkdir -p "${APPDIR}/usr/share/applications"
-    mkdir -p "${APPDIR}/usr/share/metainfo"
+    mkdir -p "${APPDIR}/usr/share/man/man1"
     mkdir -p "${APPDIR}/opt/gpgman"
 
     cp -r "${SCRIPT_DIR}/gpgman" "${APPDIR}/usr/share/gpgman/"
@@ -503,6 +540,7 @@ build_appimage() {
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/usr/share/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/usr/share/gpgman/"
     cp "${SCRIPT_DIR}/gpgman.desktop" "${APPDIR}/usr/share/gpgman/"
+    [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${APPDIR}/usr/share/man/man1/gpgman.1" && ln -sf gpgman.1 "${APPDIR}/usr/share/man/man1/gpgman-cli.1"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${APPDIR}/usr/share/gpgman/"
 
     chmod +x "${APPDIR}/usr/share/gpgman/main.py"
@@ -571,6 +609,7 @@ EOF
 
     local APPIMAGE_OUT="${DIST_DIR}/GPGMan-${VERSION}-x86_64.AppImage"
     if command -v appimagetool >/dev/null 2>&1; then
+        ARCH=x86_64 appimagetool --appimage-extract-and-run "${APPDIR}" "${APPIMAGE_OUT}" 2>/dev/null || \
         ARCH=x86_64 appimagetool "${APPDIR}" "${APPIMAGE_OUT}"
         log_success "Built AppImage: ${APPIMAGE_OUT}"
     else

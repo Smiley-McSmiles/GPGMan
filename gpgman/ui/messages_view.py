@@ -35,6 +35,26 @@ class MessagesView(Gtk.Box):
         self._build_ui()
         self.reload_keys()
 
+    def _connect_enter(self, entry_widget, action_target):
+        """Allow pressing Enter / Return inside the entry to trigger the action."""
+        def _trigger(*_):
+            if isinstance(action_target, str):
+                cb = getattr(self, action_target, None)
+            else:
+                cb = getattr(self, action_target.__name__, action_target)
+            if callable(cb):
+                cb(None)
+
+        entry_widget.connect("entry-activated", _trigger)
+        ctrl = Gtk.EventControllerKey.new()
+        def _on_key(c, keyval, keycode, state):
+            if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                _trigger()
+                return True
+            return False
+        ctrl.connect("key-pressed", _on_key)
+        entry_widget.add_controller(ctrl)
+
     def _build_ui(self):
         # View switcher for Encrypt / Decrypt
         self.view_stack = Adw.ViewStack()
@@ -127,6 +147,7 @@ class MessagesView(Gtk.Box):
 
         self.sym_pass_entry = Adw.PasswordEntryRow(title="Encryption Passphrase")
         self.sym_pass_entry.set_visible(False)
+        self._connect_enter(self.sym_pass_entry, self._on_encrypt_clicked)
         enc_type_group.add(self.sym_pass_entry)
 
         box.append(enc_type_group)
@@ -179,6 +200,7 @@ class MessagesView(Gtk.Box):
 
         self.sign_pass_entry = Adw.PasswordEntryRow(title="Signing Passphrase (if key is protected)")
         self.sign_pass_entry.set_visible(False)
+        self._connect_enter(self.sign_pass_entry, self._on_encrypt_clicked)
         sign_group.add(self.sign_pass_entry)
 
         box.append(sign_group)
@@ -277,6 +299,7 @@ class MessagesView(Gtk.Box):
         # 2. Passphrase row for decryption
         pass_group = Adw.PreferencesGroup(title="Decryption Authorization")
         self.decrypt_pass_entry = Adw.PasswordEntryRow(title="Passphrase (if password-protected)")
+        self._connect_enter(self.decrypt_pass_entry, self._on_decrypt_clicked)
         pass_group.add(self.decrypt_pass_entry)
         box.append(pass_group)
 

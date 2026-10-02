@@ -39,6 +39,26 @@ class ClearsignView(Gtk.Box):
         self._build_ui()
         self.reload_keys()
 
+    def _connect_enter(self, entry_widget, action_target):
+        """Allow pressing Enter / Return inside the entry to trigger the action."""
+        def _trigger(*_):
+            if isinstance(action_target, str):
+                cb = getattr(self, action_target, None)
+            else:
+                cb = getattr(self, action_target.__name__, action_target)
+            if callable(cb):
+                cb(None)
+
+        entry_widget.connect("entry-activated", _trigger)
+        ctrl = Gtk.EventControllerKey.new()
+        def _on_key(c, keyval, keycode, state):
+            if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                _trigger()
+                return True
+            return False
+        ctrl.connect("key-pressed", _on_key)
+        entry_widget.add_controller(ctrl)
+
     def _build_ui(self):
         self.view_stack = Adw.ViewStack()
         self.view_stack.set_vexpand(True)
@@ -115,6 +135,7 @@ class ClearsignView(Gtk.Box):
         key_group.add(self.cs_key_combo)
 
         self.cs_pass_entry = Adw.PasswordEntryRow(title="Signing Passphrase (if password-protected)")
+        self._connect_enter(self.cs_pass_entry, self._on_clearsign_text_clicked)
         key_group.add(self.cs_pass_entry)
         box.append(key_group)
 
@@ -187,6 +208,7 @@ class ClearsignView(Gtk.Box):
         opt_group.add(self.sign_file_key_combo)
 
         self.sign_file_pass_entry = Adw.PasswordEntryRow(title="Signing Passphrase (if password-protected)")
+        self._connect_enter(self.sign_file_pass_entry, self._on_sign_file_clicked)
         opt_group.add(self.sign_file_pass_entry)
 
         sig_type_model = Gtk.StringList.new([
