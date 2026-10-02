@@ -1,4 +1,4 @@
-# 🔒 GPGMan v1.3.0 - OpenPGP & GnuPG Suite (GUI & CLI)
+# 🔒 GPGMan v1.3.1 - OpenPGP & GnuPG Suite (GUI & CLI)
 
 <p align="center">
   <img src="gpgman-icon.svg" alt="GPGMan Logo" width="128" height="128">
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Smiley-McSmiles/GPGMan/releases"><img src="https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square" alt="Version 1.3.0"></a>
+  <a href="https://github.com/Smiley-McSmiles/GPGMan/releases"><img src="https://img.shields.io/badge/version-1.3.1-blue.svg?style=flat-square" alt="Version 1.3.1"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="MIT License"></a>
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg?style=flat-square" alt="Python 3.10+"></a>
   <a href="https://gtk.org"><img src="https://img.shields.io/badge/toolkit-GTK4%20%7C%20Libadwaita-red.svg?style=flat-square" alt="GTK4 Libadwaita"></a>
@@ -98,13 +98,13 @@ GPGMan includes a comprehensive compilation script `package.sh` to produce nativ
 ./package.sh --all
 ```
 This produces all artifacts inside `dist/`:
-- **Ubuntu / Debian**: `dist/gpgman_1.3.0_all.deb`
-- **Fedora / RHEL / openSUSE**: `dist/gpgman-1.3.0-1.noarch.rpm`
-- **Arch Linux**: `dist/gpgman-1.3.0-1-any.pkg.tar.zst` and `dist/PKGBUILD`
-- **OpenBSD**: `dist/gpgman-1.3.0-openbsd.pkg.tar.gz` and `dist/openbsd-port/Makefile`
-- **Void Linux**: `dist/void-linux/template` and `dist/gpgman-1.3.0_1.void.tar.gz`
-- **Standalone Portable Tarball**: `dist/gpgman-1.3.0-linux-portable.tar.gz`
-- **AppImage**: `dist/GPGMan-1.3.0-x86_64.AppImage` (or self-contained AppDir bundle)
+- **Ubuntu / Debian**: `dist/gpgman_1.3.1_all.deb`
+- **Fedora / RHEL / openSUSE**: `dist/gpgman-1.3.1-1.noarch.rpm`
+- **Arch Linux**: `dist/gpgman-1.3.1-1-any.pkg.tar.zst` and `dist/PKGBUILD`
+- **OpenBSD**: `dist/gpgman-1.3.1-openbsd.pkg.tar.gz` and `dist/openbsd-port/Makefile`
+- **Void Linux**: `dist/void-linux/template` and `dist/gpgman-1.3.1_1.void.tar.gz`
+- **Standalone Portable Tarball**: `dist/gpgman-1.3.1-linux-portable.tar.gz`
+- **AppImage**: `dist/GPGMan-1.3.1-x86_64.AppImage` (or self-contained AppDir bundle)
 - **Flatpak**: `dist/flatpak/org.gpgman.GpgMan.yaml`
 - **Checksums**: `dist/SHA256SUMS`
 
@@ -139,7 +139,7 @@ gpgman --cli
 Displays an intuitive ANSI menu:
 ```text
 ================================================================
-  🔒 GPGMan CLI v1.3.0 - OpenPGP & GnuPG Suite
+  🔒 GPGMan CLI v1.3.1 - OpenPGP & GnuPG Suite
   GUI & CLI Dual-Style OpenPGP Cryptographic Manager
 ================================================================
 
@@ -209,7 +209,7 @@ gpgman decrypt-file backup.tar.gz.gpg -o backup.tar.gz
 #### Clearsigning & Verifying:
 ```bash
 # Clearsign a message
-gpgman clearsign -s 0xMY_KEY_ID -m "I endorse release v1.3.0"
+gpgman clearsign -s 0xMY_KEY_ID -m "I endorse release v1.3.1"
 
 # Verify detached signature
 gpgman verify release.tar.gz --sig release.tar.gz.asc
