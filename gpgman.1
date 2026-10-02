@@ -1,0 +1,343 @@
+.TH GPGMAN 1 "October 2026" "GPGMan 1.3.1" "User Commands"
+.SH NAME
+gpgman \- Dual-Style OpenPGP Cryptographic Management Suite (GUI & CLI)
+.SH SYNOPSIS
+.B gpgman
+[\fIOPTIONS\fR]
+.br
+.B gpgman
+\fISUBCOMMAND\fR [\fIARGUMENTS...\fR]
+.br
+.B gpgman-cli
+\fISUBCOMMAND\fR [\fIARGUMENTS...\fR]
+
+.SH DESCRIPTION
+.B GPGMan
+is a modern, dual-style OpenPGP cryptographic suite providing both a polished
+desktop graphical interface built with GTK4 and Libadwaita, and an uncompromising,
+headless command-line interface (CLI) with 1:1 functional parity.
+
+Designed for security professionals, sysadmins, and privacy-conscious users, GPGMan
+interfaces directly with the active \fBgnupg\fR (GnuPG) backend and its keyrings.
+It provides complete lifecycle management for PGP keys, asymmetric and symmetric
+encryption/decryption of messages and arbitrary files, digital signature creation
+and cryptographic verification, multi-algorithm hashing, and GnuPG daemon diagnostics.
+
+When launched without arguments in a desktop session, or with \fB--gui\fR, GPGMan
+opens the GTK4 application. When invoked as \fBgpgman-cli\fR or with any CLI
+subcommand, GPGMan executes in headless terminal mode.
+
+.SH GLOBAL OPTIONS
+.TP
+.BR --gui
+Force launching the graphical user interface (GTK4 / Libadwaita).
+.TP
+.BR --cli
+Force command-line mode even if no subcommand is given.
+.TP
+.BR -v ", " --version
+Print version information and exit.
+.TP
+.BR -h ", " --help
+Display available subcommands, command syntax, and usage help.
+.TP
+.BI --gpg-bin \ PATH
+Specify a custom path to the \fBgpg\fR executable.
+.TP
+.BI --gpg-home \ DIR
+Specify an alternate GnuPG home directory (overriding the default \fIGNUPGHOME\fR).
+
+.SH KEYBOARD SHORTCUTS (GUI)
+GPGMan's graphical interface includes convenient keyboard accelerators to streamline cryptographic operations:
+.TP
+.B Enter / Return in Passphrase Rows
+When typing a passphrase for symmetric encryption, signing with a protected private key,
+or decrypting a message or file, pressing \fBEnter\fR immediately triggers the respective
+action (Encrypt or Decrypt) without requiring mouse navigation.
+.TP
+.B Escape
+Dismisses modal dialogs (Key Details, Key Generation, Key Import, About dialog).
+.TP
+.B Ctrl+Q
+Quits the application cleanly.
+
+.SH CLI SUBCOMMANDS
+.SS Key Management
+.TP
+.B list-keys
+List all public keys in the active keyring along with Key ID, User ID (name, email),
+fingerprint, algorithm (RSA, Ed25519), creation date, and expiration status.
+.TP
+.B list-secret-keys
+List only private / secret keys available for signing and decryption.
+.TP
+.BI generate-key \ [OPTIONS]
+Generate a new cryptographic keypair.
+.RS
+.TP
+.BI --name \ NAME
+Full name of the keyholder (required).
+.TP
+.BI --email \ EMAIL
+Email address associated with the key (required).
+.TP
+.BI --comment \ TEXT
+Optional comment for the user identity.
+.TP
+.BI --key-type \ TYPE
+Key algorithm: \fBed25519\fR (default, modern and compact) or \fBrsa4096\fR, \fBrsa2048\fR.
+.TP
+.BI --expire \ DURATION
+Expiration duration, e.g. \fB1y\fR (1 year, default), \fB2y\fR, \fB6m\fR, or \fBnever\fR.
+.TP
+.BI --passphrase \ PASS
+Passphrase to protect the private key.
+.RE
+.TP
+.BI export-key \ KEY_ID \ [OPTIONS]
+Export a public key.
+.RS
+.TP
+.B --armor
+Output in ASCII-armored format (\fI-----BEGIN PGP PUBLIC KEY BLOCK-----\fR). Default is enabled.
+.TP
+.BI -o ", " --output \ FILE
+Save exported key to a file instead of standard output.
+.RE
+.TP
+.BI export-secret-key \ KEY_ID \ [OPTIONS]
+Export a private / secret key.
+.RS
+.TP
+.BI --passphrase \ PASS
+Passphrase to unlock the private key for export.
+.TP
+.BI -o ", " --output \ FILE
+Destination file path.
+.RE
+.TP
+.BI import-key \ FILE
+Import a public key or secret keypair from a file or stdin into the keyring.
+.TP
+.BI delete-key \ KEY_ID \ [OPTIONS]
+Remove a key from the keyring.
+.RS
+.TP
+.B --secret
+Delete the secret key rather than the public key.
+.TP
+.B -y ", " --yes
+Skip interactive confirmation.
+.RE
+
+.SS Message Cryptography
+.TP
+.B encrypt-message \ [OPTIONS]
+Encrypt a plaintext message into an ASCII-armored PGP block.
+.RS
+.TP
+.BI -r ", " --recipient \ KEY_ID
+Recipient public key ID or email. Multiple recipients may be specified.
+.TP
+.BI -s ", " --sign-with \ KEY_ID
+Optionally sign the message with the specified private key.
+.TP
+.BI --passphrase \ PASS
+Passphrase for the signing key (if signing is enabled).
+.TP
+.B --symmetric
+Use passphrase-based symmetric encryption (AES-256) instead of public key cryptography.
+.TP
+.BI -m ", " --message \ TEXT
+Plaintext string. If omitted, input is read from standard input.
+.RE
+.TP
+.B decrypt-message \ [OPTIONS]
+Decrypt an ASCII-armored PGP message and verify any embedded signature.
+.RS
+.TP
+.BI --passphrase \ PASS
+Passphrase for the secret key or symmetric cipher.
+.TP
+.BI -m ", " --message \ TEXT
+Encrypted text. If omitted, input is read from standard input.
+.RE
+
+.SS Digital Signatures & Clearsigning
+.TP
+.B clearsign-message \ [OPTIONS]
+Generate an OpenPGP clearsigned message (\fI-----BEGIN PGP SIGNED MESSAGE-----\fR).
+.RS
+.TP
+.BI -u ", " --sign-key \ KEY_ID
+Signing key ID or email (required).
+.TP
+.BI --passphrase \ PASS
+Passphrase to unlock the signing key.
+.TP
+.BI -m ", " --message \ TEXT
+Message content to sign (or stdin).
+.RE
+.TP
+.B verify-clearsign \ [OPTIONS]
+Verify an OpenPGP clearsigned message. Reports signature validity, signer fingerprint,
+key ID, and timestamp, and extracts the verified plaintext body.
+.RS
+.TP
+.BI -m ", " --message \ TEXT
+Armored clearsigned text (or stdin).
+.RE
+
+.SS File Operations
+.TP
+.B encrypt-file \ [OPTIONS]
+Encrypt a file on disk.
+.RS
+.TP
+.BI -i ", " --input \ FILE
+Input file path (required).
+.TP
+.BI -o ", " --output \ FILE
+Output encrypted file path (required).
+.TP
+.BI -r ", " --recipient \ KEY_ID
+Recipient key ID (can specify multiple).
+.TP
+.B --symmetric
+Encrypt symmetrically with a passphrase.
+.TP
+.BI --passphrase \ PASS
+Passphrase for symmetric encryption or signing key.
+.TP
+.B --armor
+Create ASCII-armored output (\fI.asc\fR) instead of binary (\fI.gpg\fR).
+.RE
+.TP
+.B decrypt-file \ [OPTIONS]
+Decrypt an encrypted file on disk.
+.RS
+.TP
+.BI -i ", " --input \ FILE
+Encrypted input file (required).
+.TP
+.BI -o ", " --output \ FILE
+Destination plaintext file (required).
+.TP
+.BI --passphrase \ PASS
+Decryption passphrase if required.
+.RE
+.TP
+.B sign-file \ [OPTIONS]
+Sign a file.
+.RS
+.TP
+.BI -i ", " --input \ FILE
+File to sign (required).
+.TP
+.BI -u ", " --sign-key \ KEY_ID
+Signing key ID (required).
+.TP
+.B --detached
+Create a detached signature file (\fI.sig\fR or \fI.asc\fR).
+.TP
+.B --armor
+Output in ASCII-armored format.
+.RE
+.TP
+.B verify-file \ [OPTIONS]
+Verify a signed file.
+.RS
+.TP
+.BI -i ", " --input \ FILE
+Signed file (or data file if using detached signature).
+.TP
+.BI -s ", " --sig-file \ FILE
+Detached signature file (optional for inline-signed files).
+.RE
+
+.SS Cryptographic Hashes & System Diagnostics
+.TP
+.B checksum \ [OPTIONS]
+Calculate cryptographic digest of a file.
+.RS
+.TP
+.BI -i ", " --input \ FILE
+File to hash.
+.TP
+.BI -a ", " --algorithm \ ALGO
+Hash algorithm: \fBsha256\fR (default), \fBsha512\fR, \fBsha1\fR, or \fBmd5\fR.
+.RE
+.TP
+.B verify-checksum \ [OPTIONS]
+Compare a file's hash against an expected value.
+.RS
+.TP
+.BI -i ", " --input \ FILE
+Target file.
+.TP
+.BI -c ", " --hash \ EXPECTED_HASH
+Expected hex digest.
+.TP
+.BI -a ", " --algorithm \ ALGO
+Hash algorithm (auto-detected by hash length if omitted).
+.RE
+.TP
+.B system-info
+Display GnuPG binary location, version string, active GNUPGHOME, and agent status.
+.TP
+.B kill-agent
+Gracefully terminate running \fBgpg-agent\fR daemon processes to force key cache reload.
+
+.SH ENVIRONMENT VARIABLES
+.TP
+.B GNUPGHOME
+Directory storing GnuPG keyrings, trust databases, and daemon sockets (defaults to \fI~/.gnupg\fR).
+.TP
+.B GPG_BIN
+Path to the \fBgpg\fR binary. If unset, searched in standard system \fIPATH\fR.
+
+.SH FILES
+.TP
+.I /usr/share/man/man1/gpgman.1.gz
+System manual page for GPGMan.
+.TP
+.I /usr/bin/gpgman
+Primary executable wrapper (launches GUI or CLI depending on arguments).
+.TP
+.I /usr/bin/gpgman-cli
+Dedicated CLI executable symlink.
+.TP
+.I /usr/share/applications/gpgman.desktop
+XDG desktop entry.
+.TP
+.I ~/.gnupg/
+Default user GnuPG configuration and keyrings.
+
+.SH AUTHORS
+.B GPGMan
+was designed and developed by:
+.br
+\(bu \fBWOOSAH\fR (Lead Architect)
+.br
+\(bu \fBGemini 3.8\fR (Engineer)
+
+.SH BUGS & ISSUES
+Report bugs, feature requests, and suggestions to the GitHub repository:
+.br
+.UR https://github.com/Smiley-McSmiles/GPGMan/issues
+.UE
+
+.SH COPYRIGHT
+Copyright \(co 2026 WOOSAH & Gemini 3.8.
+.br
+Released under the terms of the \fBMIT License\fR.
+.br
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the Software
+without restriction.
+
+.SH SEE ALSO
+.BR gpg (1),
+.BR gpg-agent (1),
+.BR pinentry (1),
+.BR dirmngr (1)

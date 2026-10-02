@@ -24,6 +24,8 @@ if [ "$UNAME_S" = "OpenBSD" ]; then
     BIN_DIR="/usr/local/bin"
     ICON_DIR="/usr/local/share/icons/hicolor/scalable/apps"
     PIXMAPS_DIR="/usr/local/share/pixmaps"
+    MAN_DIR="/usr/local/man/man1"
+    LOCAL_MAN_DIR=""
 else
     # Linux (Void, Arch, Ubuntu, Fedora, etc.)
     INSTALL_DIR="/opt/gpgman"
@@ -31,6 +33,8 @@ else
     BIN_DIR="/usr/local/bin"
     ICON_DIR="/usr/share/icons/hicolor/scalable/apps"
     PIXMAPS_DIR="/usr/share/pixmaps"
+    MAN_DIR="/usr/share/man/man1"
+    LOCAL_MAN_DIR="/usr/local/share/man/man1"
 fi
 
 # Determine script directory
@@ -86,7 +90,17 @@ uninstall_gpgman() {
         echo -e "  ${GREEN}✓${NC} Removed $PIXMAPS_DIR/gpgman-icon.svg"
     fi
 
+    # Remove manpages
+    rm -f "$MAN_DIR/gpgman.1" "$MAN_DIR/gpgman-cli.1" "$MAN_DIR/gpgman.1.gz" "$MAN_DIR/gpgman-cli.1.gz" 2>/dev/null || true
+    if [ -n "$LOCAL_MAN_DIR" ]; then
+        rm -f "$LOCAL_MAN_DIR/gpgman.1" "$LOCAL_MAN_DIR/gpgman-cli.1" "$LOCAL_MAN_DIR/gpgman.1.gz" "$LOCAL_MAN_DIR/gpgman-cli.1.gz" 2>/dev/null || true
+    fi
+    echo -e "  ${GREEN}✓${NC} Removed manual pages"
+
     # Update caches
+    if command -v mandb >/dev/null 2>&1; then
+        mandb -q 2>/dev/null || true
+    fi
     if command -v update-desktop-database >/dev/null 2>&1; then
         update-desktop-database -q "$DESKTOP_DIR" 2>/dev/null || true
     fi
@@ -108,7 +122,7 @@ fi
 check_root "$@"
 
 echo -e "${BLUE}${BOLD}========================================${NC}"
-echo -e "${BLUE}${BOLD}        GPGMan v1.3 Installer ($UNAME_S)      ${NC}"
+echo -e "${BLUE}${BOLD}        GPGMan v1.3.1 Installer ($UNAME_S)      ${NC}"
 echo -e "${BLUE}${BOLD}========================================${NC}"
 
 # Check for required system packages
@@ -145,6 +159,10 @@ mkdir -p "$DESKTOP_DIR"
 mkdir -p "$BIN_DIR"
 mkdir -p "$ICON_DIR"
 mkdir -p "$PIXMAPS_DIR"
+mkdir -p "$MAN_DIR"
+if [ -n "$LOCAL_MAN_DIR" ]; then
+    mkdir -p "$LOCAL_MAN_DIR"
+fi
 
 # 2. Copy application files
 echo -e "${BLUE}==> Installing application files to $INSTALL_DIR...${NC}"
@@ -192,7 +210,26 @@ sed -e "s|/opt/gpgman|$INSTALL_DIR|g" "$SCRIPT_DIR/gpgman.desktop" > "$DESKTOP_D
 chmod 644 "$DESKTOP_DIR/gpgman.desktop"
 echo -e "  ${GREEN}✓${NC} Installed $DESKTOP_DIR/gpgman.desktop"
 
-# 6. Update system desktop and icon databases
+# 6. Install manual page
+if [ -f "$SCRIPT_DIR/gpgman.1" ]; then
+    echo -e "${BLUE}==> Installing manual pages (man gpgman)...${NC}"
+    cp "$SCRIPT_DIR/gpgman.1" "$MAN_DIR/gpgman.1"
+    chmod 644 "$MAN_DIR/gpgman.1"
+    ln -sf "gpgman.1" "$MAN_DIR/gpgman-cli.1" 2>/dev/null || true
+
+    if [ -n "$LOCAL_MAN_DIR" ] && [ "$LOCAL_MAN_DIR" != "$MAN_DIR" ]; then
+        cp "$SCRIPT_DIR/gpgman.1" "$LOCAL_MAN_DIR/gpgman.1"
+        chmod 644 "$LOCAL_MAN_DIR/gpgman.1"
+        ln -sf "gpgman.1" "$LOCAL_MAN_DIR/gpgman-cli.1" 2>/dev/null || true
+    fi
+
+    if command -v mandb >/dev/null 2>&1; then
+        mandb -q 2>/dev/null || true
+    fi
+    echo -e "  ${GREEN}✓${NC} Installed manual pages to $MAN_DIR/gpgman.1"
+fi
+
+# 7. Update system desktop and icon databases
 echo -e "${BLUE}==> Updating system databases...${NC}"
 if command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database -q "$DESKTOP_DIR" 2>/dev/null || true
@@ -211,7 +248,8 @@ echo -e "${GREEN}${BOLD}====================================================${NC
 echo -e "You can launch GPGMan by:"
 echo -e "  1. Searching for ${BOLD}GPGMan${NC} in your desktop launcher"
 echo -e "  2. Running ${BOLD}gpgman${NC} in your terminal"
-echo -e "  3. Running ${BOLD}$INSTALL_DIR/main.py${NC}"
+echo -e "  3. Running ${BOLD}man gpgman${NC} for full CLI & GUI documentation"
+echo -e "  4. Running ${BOLD}$INSTALL_DIR/main.py${NC}"
 echo ""
 echo -e "To uninstall anytime, run:"
 if command -v doas >/dev/null 2>&1; then
