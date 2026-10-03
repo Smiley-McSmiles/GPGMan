@@ -48,7 +48,9 @@ def _prompt_adw(parent, heading, body, on_result) -> bool:
 
     dialog.connect("response", on_resp)
     dialog.present()
-    GLib.idle_add(entry.grab_focus)
+    # Run once: idle callbacks that return a truthy value are rescheduled forever,
+    # which would keep re-selecting the entry text on every keystroke.
+    GLib.idle_add(lambda: entry.grab_focus() and False)
     return True
 
 
