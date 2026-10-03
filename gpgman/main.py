@@ -16,8 +16,14 @@ def run_gui(argv: list[str]) -> int:
     import gi
     gi.require_version("Gtk", "4.0")
     gi.require_version("Adw", "1")
-    from gi.repository import Adw, Gio
+    from gi.repository import Adw, Gio, GLib, Gtk
     from gpgman.ui.window import MainWindow
+
+    # Match the installed desktop entry (org.gpgman.GpgMan.desktop) so the shell
+    # shows the proper name and icon in the dock / task bar.
+    GLib.set_prgname(__app_id__)
+    GLib.set_application_name("GPGMan")
+    Gtk.Window.set_default_icon_name("gpgman-icon")
 
     class GpgManApplication(Adw.Application):
         def __init__(self):

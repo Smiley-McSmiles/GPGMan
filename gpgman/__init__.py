@@ -2,5 +2,5 @@
 GPGMan - GTK4 and Libadwaita GPG / PGP Manager
 """
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 __app_id__ = "org.gpgman.GpgMan"

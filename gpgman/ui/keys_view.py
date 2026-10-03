@@ -18,9 +18,26 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 from gpgman.gpg_backend import GPGBackend, GPGKey
 from gpgman.ui.dialog_utils import setup_modal_window
 from gpgman.ui.file_chooser import choose_file
+from gpgman.ui.passphrase_dialog import ask_passphrase
 
 if TYPE_CHECKING:
     from gpgman.ui.window import MainWindow
+
+
+def _export_secret_with_prompt(parent, backend: GPGBackend, key: GPGKey, finish) -> None:
+    """Ask for the key passphrase in-app (any desktop), then export the secret key."""
+    def on_passphrase(passphrase: Optional[str]):
+        if passphrase is None:
+            return
+        finish(*backend.export_secret_key(key.key_id, armor=True, passphrase=passphrase))
+
+    ask_passphrase(
+        parent,
+        "Export Secret Key",
+        f"Enter the passphrase for {key.display_name} ({key.key_id}). "
+        "Leave empty if the key has no passphrase.",
+        on_passphrase,
+    )
 
 
 class KeysView(Gtk.Box):
@@ -269,18 +286,17 @@ class KeysView(Gtk.Box):
         dialog.present()
 
     def _export_key(self, key: GPGKey, secret: bool = False):
+        def finish(success: bool, data: str):
+            if not success:
+                self.window.show_toast(f"Export failed: {data}")
+                return
+            # Show export preview and save dialog
+            ExportPreviewDialog(self.window, key, data, secret=secret).present()
+
         if secret:
-            success, data = self.backend.export_secret_key(key.key_id, armor=True)
+            _export_secret_with_prompt(self.window, self.backend, key, finish)
         else:
-            success, data = self.backend.export_public_key(key.key_id, armor=True)
-
-        if not success:
-            self.window.show_toast(f"Export failed: {data}")
-            return
-
-        # Show export preview and save dialog
-        dialog = ExportPreviewDialog(self.window, key, data, secret=secret)
-        dialog.present()
+            finish(*self.backend.export_public_key(key.key_id, armor=True))
 
     def _confirm_delete_key(self, key: GPGKey):
         dialog = Adw.MessageDialog(
@@ -454,18 +470,17 @@ class KeyDetailsDialog(Adw.Window):
             self.get_transient_for().show_toast("Copied to clipboard.")
 
     def _export(self, secret: bool):
+        def finish(success: bool, data: str):
+            if not success:
+                if hasattr(self.get_transient_for(), "show_toast"):
+                    self.get_transient_for().show_toast(f"Export failed: {data}")
+                return
+            ExportPreviewDialog(self, self.key, data, secret=secret).present()
+
         if secret:
-            success, data = self.backend.export_secret_key(self.key.key_id, armor=True)
+            _export_secret_with_prompt(self, self.backend, self.key, finish)
         else:
-            success, data = self.backend.export_public_key(self.key.key_id, armor=True)
-
-        if not success:
-            if hasattr(self.get_transient_for(), "show_toast"):
-                self.get_transient_for().show_toast(f"Export failed: {data}")
-            return
-
-        preview = ExportPreviewDialog(self, self.key, data, secret=secret)
-        preview.present()
+            finish(*self.backend.export_public_key(self.key.key_id, armor=True))
 
     def _change_passphrase(self, _):
         dialog = Adw.MessageDialog(
