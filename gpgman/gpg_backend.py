@@ -496,13 +496,23 @@ class GPGBackend:
             return True, out
         return False, err or "Export failed."
 
-    def export_secret_key(self, key_id: str, armor: bool = True) -> Tuple[bool, str]:
-        """Export secret key."""
+    def export_secret_key(
+        self, key_id: str, armor: bool = True, passphrase: Optional[str] = None
+    ) -> Tuple[bool, str]:
+        """Export secret key.
+
+        With ``passphrase`` set, gpg is run in loopback pinentry mode and the
+        passphrase is fed over stdin, so no system pinentry is required.
+        """
         args = ["--export-secret-keys"]
         if armor:
             args.insert(0, "--armor")
+        input_data = None
+        if passphrase is not None:
+            args = ["--pinentry-mode", "loopback", "--passphrase-fd", "0"] + args
+            input_data = passphrase + "\n"
         args.append(key_id)
-        code, out, err = self._run(args)
+        code, out, err = self._run(args, input_data=input_data)
         if code == 0 and out.strip():
             return True, out
         return False, err or "Export secret key failed."

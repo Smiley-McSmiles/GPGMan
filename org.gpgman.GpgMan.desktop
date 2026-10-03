@@ -8,4 +8,5 @@ Terminal=false
 Type=Application
 Categories=Utility;Security;System;GTK;
 StartupNotify=true
-Keywords=GPG;PGP;Cryptography;Encryption;Signature;Keyring;Libadwaita;GTK4;
+StartupWMClass=org.gpgman.GpgMan
+Keywords=GPG;PGP;Cryptography;Encryption;Signature;Keyring;GTK4;

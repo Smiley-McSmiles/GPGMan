@@ -75,9 +75,10 @@ uninstall_gpgman() {
         echo -e "  ${GREEN}✓${NC} Removed $BIN_DIR/gpgman-cli"
     fi
 
-    if [ -f "$DESKTOP_DIR/gpgman.desktop" ]; then
-        rm -f "$DESKTOP_DIR/gpgman.desktop"
-        echo -e "  ${GREEN}✓${NC} Removed $DESKTOP_DIR/gpgman.desktop"
+    rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.2
+    if [ -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop" ]; then
+        rm -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
+        echo -e "  ${GREEN}✓${NC} Removed $DESKTOP_DIR/org.gpgman.GpgMan.desktop"
     fi
 
     if [ -f "$ICON_DIR/gpgman-icon.svg" ]; then
@@ -122,7 +123,7 @@ fi
 check_root "$@"
 
 echo -e "${BLUE}${BOLD}========================================${NC}"
-echo -e "${BLUE}${BOLD}        GPGMan v1.3.1 Installer ($UNAME_S)      ${NC}"
+echo -e "${BLUE}${BOLD}        GPGMan v1.3.2 Installer ($UNAME_S)      ${NC}"
 echo -e "${BLUE}${BOLD}========================================${NC}"
 
 # Check for required system packages
@@ -175,7 +176,7 @@ cp "$SCRIPT_DIR/gpgman-icon.svg" "$INSTALL_DIR/"
 if [ -f "$SCRIPT_DIR/gpgman-icon.png" ]; then
     cp "$SCRIPT_DIR/gpgman-icon.png" "$INSTALL_DIR/"
 fi
-cp "$SCRIPT_DIR/gpgman.desktop" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/org.gpgman.GpgMan.desktop" "$INSTALL_DIR/"
 if [ -d "$SCRIPT_DIR/icons" ]; then
     cp -r "$SCRIPT_DIR/icons" "$INSTALL_DIR/"
 fi
@@ -206,9 +207,10 @@ echo -e "  ${GREEN}✓${NC} Installed icons to system icon directories"
 
 # 5. Move/install .desktop file
 echo -e "${BLUE}==> Installing desktop entry to $DESKTOP_DIR...${NC}"
-sed -e "s|/opt/gpgman|$INSTALL_DIR|g" "$SCRIPT_DIR/gpgman.desktop" > "$DESKTOP_DIR/gpgman.desktop"
-chmod 644 "$DESKTOP_DIR/gpgman.desktop"
-echo -e "  ${GREEN}✓${NC} Installed $DESKTOP_DIR/gpgman.desktop"
+rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.2
+sed -e "s|/opt/gpgman|$INSTALL_DIR|g" "$SCRIPT_DIR/org.gpgman.GpgMan.desktop" > "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
+chmod 644 "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
+echo -e "  ${GREEN}✓${NC} Installed $DESKTOP_DIR/org.gpgman.GpgMan.desktop"
 
 # 6. Install manual page
 if [ -f "$SCRIPT_DIR/gpgman.1" ]; then
