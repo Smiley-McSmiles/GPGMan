@@ -35,7 +35,8 @@ Both interfaces sit on top of the robust, hardened **`GPGBackend`** engine that 
 
 GPGMan is developed and maintained by:
 - **WOOSAH** (Lead Architect & Maintainer)
-- **GPGMan Core Engineering Team** / Google AI Studio Build
+- **Gemini 3.8 Flash** (Lead Engineer)
+- **Claude Sonnett 5.5** (Engineer)
 
 Project GitHub: [https://github.com/Smiley-McSmiles/GPGMan](https://github.com/Smiley-McSmiles/GPGMan)
 
