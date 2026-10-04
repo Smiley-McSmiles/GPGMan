@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="1.3.2"
+VERSION="1.3.3"
 APP_NAME="gpgman"
 PKG_NAME="gpgman"
 SUMMARY="Dual-style GTK4/Libadwaita GUI and CLI OpenPGP & GnuPG Suite"
@@ -238,6 +238,7 @@ fi
 - Release 1.3.0 featuring dual GTK4/Libadwaita GUI and full CLI suite.
 - Release 1.3.1 added ability to press ENTER to encrypt/decrpt with passphrase (GTK)
 - Release 1.3.2 adds a desktop-agnostic passphrase prompt for secret key export and fixes the app icon/name in the dock.
+- Release 1.3.3 adds drag-and-drop key import, .asc file association, and a donation menu in the About dialog.
 EOF
 
     if command -v rpmbuild >/dev/null 2>&1; then
