@@ -112,10 +112,10 @@ class SystemView(Gtk.Box):
         maint_group = Adw.PreferencesGroup(title="Maintenance &amp; Agent Operations")
 
         agent_row = Adw.ActionRow(
-            title="Reload GPG Agent",
-            subtitle="Send SIGHUP / reload command to running gpg-agent daemon",
+            title="Clear Cached Passphrases",
+            subtitle="Make gpg-agent forget unlocked keys (also done automatically when GPGMan quits)",
         )
-        reload_agent_btn = Gtk.Button(label="Reload Agent", valign=Gtk.Align.CENTER)
+        reload_agent_btn = Gtk.Button(label="Clear Cache", valign=Gtk.Align.CENTER)
         reload_agent_btn.connect("clicked", self._on_reload_agent)
         agent_row.add_suffix(reload_agent_btn)
         maint_group.add(agent_row)
@@ -179,11 +179,8 @@ class SystemView(Gtk.Box):
             self.window.show_toast("Copied to clipboard.")
 
     def _on_reload_agent(self, _):
-        code, out, err = self.backend._run(["--reload-agent"])
-        if code == 0:
-            self.window.show_toast("GPG Agent reloaded.")
-        else:
-            self.window.show_toast("GPG Agent reload finished.")
+        ok, msg = self.backend.clear_agent_cache()
+        self.window.show_toast(msg)
 
     def _on_edit_binary(self, _):
         current_bin = getattr(self.backend, "gpg_binary", "/usr/bin/gpg")

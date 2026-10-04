@@ -39,6 +39,7 @@ def run_gui(argv: list[str]) -> int:
             self.connect("startup", self._on_startup)
             self.connect("activate", self._on_activate)
             self.connect("open", self._on_open)
+            self.connect("shutdown", self._on_shutdown)
 
         def _on_startup(self, app):
             quit_action = Gio.SimpleAction.new("quit", None)
@@ -58,6 +59,11 @@ def run_gui(argv: list[str]) -> int:
                     self.backend = GPGBackend()
                 self.window = MainWindow(self, self.backend)
             self.window.present()
+
+        def _on_shutdown(self, app):
+            # Don't leave unlocked keys cached in gpg-agent after the app quits.
+            if self.backend:
+                self.backend.clear_agent_cache()
 
         def _on_open(self, app, files, n_files, hint):
             # Files passed by the desktop ("Open With GPGMan") or the command line.

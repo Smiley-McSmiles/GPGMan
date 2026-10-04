@@ -912,8 +912,11 @@ class ImportKeyDialog(Adw.Window):
                     raw_url,
                     headers={"User-Agent": "Mozilla/5.0 (compatible; GPGMan/1.0; +https://github.com)"},
                 )
+                max_bytes = 5 * 1024 * 1024  # a key file is never this large
                 with urllib.request.urlopen(req, timeout=15) as resp:
-                    data = resp.read()
+                    data = resp.read(max_bytes + 1)
+                if len(data) > max_bytes:
+                    raise ValueError("Downloaded file is too large to be a key.")
 
                 # Write to temp file and import
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".asc") as tmp:
@@ -1079,8 +1082,13 @@ class ExportPreviewDialog(Adw.Window):
 
         def on_selected(dest_path: str):
             try:
-                with open(dest_path, "w", encoding="utf-8") as f:
+                # Secret keys are written readable by the owner only.
+                mode = 0o600 if self.secret else 0o666
+                fd = os.open(dest_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, mode)
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
                     f.write(self.key_data)
+                if self.secret:
+                    os.chmod(dest_path, 0o600)
                 if hasattr(self.get_transient_for(), "show_toast"):
                     self.get_transient_for().show_toast(f"Saved to {os.path.basename(dest_path)}")
                 self.close()

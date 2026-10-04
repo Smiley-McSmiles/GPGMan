@@ -54,6 +54,10 @@
         <ul>
           <li>Flatpak: file dialogs use the file chooser portal, so the app no longer needs access to all files</li>
           <li>Application ID changed to io.github.smiley_mcsmiles.GPGMan</li>
+          <li>Passphrases are no longer visible in the process list while gpg runs</li>
+          <li>Exported secret keys are saved readable by the owner only</li>
+          <li>Key downloads from a URL are limited to a sane size</li>
+          <li>Cached passphrases are cleared from gpg-agent when GPGMan quits, or from the System tab</li>
         </ul>
       </description>
     </release>

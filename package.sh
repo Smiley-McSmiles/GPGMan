@@ -239,7 +239,7 @@ fi
 - Release 1.3.1 added ability to press ENTER to encrypt/decrpt with passphrase (GTK)
 - Release 1.3.2 adds a desktop-agnostic passphrase prompt for secret key export and fixes the app icon/name in the dock.
 - Release 1.3.3 adds drag-and-drop key import, .asc file association, and a donation menu in the About dialog.
-- Release 1.3.4 uses the file chooser portal in the Flatpak (no broad filesystem access), renames the app ID to io.github.smiley_mcsmiles.GPGMan, and prepares Flathub submission.
+- Release 1.3.4 uses the file chooser portal in the Flatpak (no broad filesystem access), renames the app ID to io.github.smiley_mcsmiles.GPGMan, and prepares Flathub submission. Passphrases are now passed to gpg over a private pipe instead of the command line, exported secret keys are saved owner-only, key downloads are size-capped, and cached passphrases are cleared from gpg-agent when the app quits (or from the System tab).
 EOF
 
     if command -v rpmbuild >/dev/null 2>&1; then
