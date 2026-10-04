@@ -624,43 +624,66 @@ EOF
 # ------------------------------------------------------------------------------
 # 8. Flatpak Manifest & Build
 # ------------------------------------------------------------------------------
+# GNOME runtime used for the Flatpak. Override with: GNOME_RUNTIME=51 ./package.sh --flatpak
+GNOME_RUNTIME="${GNOME_RUNTIME:-50}"
+
 build_flatpak() {
-    log_info "Building Flatpak Manifest and structure..."
+    log_info "Building Flatpak (GNOME runtime ${GNOME_RUNTIME})..."
     local FLATPAK_DIR="${DIST_DIR}/flatpak"
     mkdir -p "${FLATPAK_DIR}"
 
     cat <<EOF > "${FLATPAK_DIR}/org.gpgman.GpgMan.yaml"
 app-id: org.gpgman.GpgMan
 runtime: org.gnome.Platform
-runtime-version: '46'
+runtime-version: '${GNOME_RUNTIME}'
 sdk: org.gnome.Sdk
 command: gpgman
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
   - --socket=wayland
+  - --device=dri
   - --filesystem=host
   - --filesystem=~/.gnupg
   - --share=network
-  - --talk-name=org.gnome.keyring.SystemPrompter
 
 modules:
   - name: gpgman
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/share/gpgman /app/bin /app/share/applications /app/share/icons/hicolor/scalable/apps
+      - mkdir -p /app/share/gpgman /app/bin /app/share/applications /app/share/metainfo /app/share/icons/hicolor/scalable/apps
       - cp -r gpgman /app/share/gpgman/
       - install -m755 main.py /app/share/gpgman/
       - ln -sf /app/share/gpgman/main.py /app/bin/gpgman
       - ln -sf /app/share/gpgman/main.py /app/bin/gpgman-cli
       - install -m644 org.gpgman.GpgMan.desktop /app/share/applications/org.gpgman.GpgMan.desktop
+      - sed -i 's/^Icon=.*/Icon=org.gpgman.GpgMan/' /app/share/applications/org.gpgman.GpgMan.desktop
+      - install -m644 org.gpgman.GpgMan.metainfo.xml /app/share/metainfo/org.gpgman.GpgMan.metainfo.xml
       - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/org.gpgman.GpgMan.svg
+      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/gpgman-icon.svg
     sources:
       - type: dir
         path: ../../
+        skip:
+          - .git
+          - dist
+          - .flatpak-builder
 EOF
 
     log_success "Generated Flatpak manifest: ${FLATPAK_DIR}/org.gpgman.GpgMan.yaml"
+
+    if ! command -v flatpak-builder >/dev/null 2>&1; then
+        log_warn "flatpak-builder not found; install it to build the Flatpak. Manifest generated only."
+        return 0
+    fi
+
+    (
+        cd "${FLATPAK_DIR}" &&
+        flatpak-builder --user --force-clean --install-deps-from=flathub \
+            --repo=repo build-dir org.gpgman.GpgMan.yaml &&
+        flatpak build-bundle repo "${DIST_DIR}/gpgman-${VERSION}.flatpak" org.gpgman.GpgMan
+    ) && log_success "Built Flatpak bundle: ${DIST_DIR}/gpgman-${VERSION}.flatpak" \
+      || log_error "Flatpak build failed."
 }
 
 # ------------------------------------------------------------------------------
@@ -693,7 +716,7 @@ show_help() {
     echo "  --void        Build Void Linux template and source archive"
     echo "  --tar         Build portable standalone tarball (.tar.gz)"
     echo "  --appimage    Build standalone AppImage bundle"
-    echo "  --flatpak     Build Flatpak manifest"
+    echo "  --flatpak     Build Flatpak bundle (GNOME_RUNTIME=${GNOME_RUNTIME})"
     echo "  --clean       Clean build directories"
     echo "  --help, -h    Display this message"
     echo ""

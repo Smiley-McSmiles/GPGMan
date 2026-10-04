@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.gpgman.GpgMan</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>GPGMan</name>
+  <summary>OpenPGP and GnuPG key manager with a GUI and CLI</summary>
+  <developer id="org.gpgman">
+    <name>WOOSAH</name>
+  </developer>
+  <description>
+    <p>GPGMan manages GPG keys and performs OpenPGP operations from a modern GTK4 desktop interface or an equivalent terminal CLI.</p>
+    <ul>
+      <li>Create, import, export and delete keys, including drag-and-drop key import</li>
+      <li>Encrypt and decrypt messages and files</li>
+      <li>Sign and verify text and files</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">org.gpgman.GpgMan.desktop</launchable>
+  <url type="homepage">https://github.com/Smiley-McSmiles/GPGMan</url>
+  <url type="bugtracker">https://github.com/Smiley-McSmiles/GPGMan/issues</url>
+  <provides>
+    <binary>gpgman</binary>
+    <mediatype>application/pgp-keys</mediatype>
+    <mediatype>application/pgp-encrypted</mediatype>
+    <mediatype>application/pgp-signature</mediatype>
+  </provides>
+  <categories>
+    <category>Utility</category>
+    <category>Security</category>
+  </categories>
+  <content_rating type="oars-1.1" />
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </supports>
+  <releases>
+    <release version="1.3.3" date="2026-10-04" />
+  </releases>
+</component>
