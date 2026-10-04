@@ -233,6 +233,29 @@ class GPGBackend:
             if pass_read_fd is not None:
                 os.close(pass_read_fd)
 
+    def clear_agent_cache(self) -> Tuple[bool, str]:
+        """Make gpg-agent forget cached passphrases (RELOADAGENT).
+
+        Does nothing if no agent is running for this GnuPG home.
+        """
+        bin_dir = os.path.dirname(self.gpg_binary) if os.path.isabs(self.gpg_binary) else ""
+        homedir = ["--homedir", self.gnupg_home] if self.gnupg_home else []
+        candidates = []
+        for name, extra in (("gpgconf", ["--reload", "gpg-agent"]), ("gpg-connect-agent", ["reloadagent", "/bye"])):
+            exe = shutil.which(name, path=bin_dir) if bin_dir else None
+            exe = exe or shutil.which(name)
+            if exe:
+                candidates.append([exe] + homedir + extra)
+        if not candidates:
+            return False, "gpgconf / gpg-connect-agent not found."
+        try:
+            res = subprocess.run(candidates[0], capture_output=True, text=True, timeout=10)
+        except Exception as e:
+            return False, str(e)
+        if res.returncode == 0:
+            return True, "Cached passphrases cleared."
+        return False, (res.stderr or res.stdout).strip() or "Failed to clear the gpg-agent cache."
+
     def _parse_timestamp(self, ts_str: str) -> Optional[str]:
         if not ts_str:
             return None
