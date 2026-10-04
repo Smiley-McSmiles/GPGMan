@@ -95,7 +95,7 @@ build_deb() {
 
     # Desktop entry & Icon
     sed -e "s|/opt/gpgman|/opt/gpgman|g" "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" > "${DEB_ROOT}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
-    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${DEB_ROOT}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${DEB_ROOT}/usr/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg"
 
     # Manual page
     if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
@@ -218,7 +218,7 @@ ln -sf /opt/gpgman/main.py %{buildroot}%{_bindir}/gpgman
 ln -sf /opt/gpgman/main.py %{buildroot}%{_bindir}/gpgman-cli
 
 cp io.github.smiley_mcsmiles.GPGMan.desktop %{buildroot}%{_datadir}/applications/io.github.smiley_mcsmiles.GPGMan.desktop
-cp gpgman-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/gpgman-icon.svg
+cp gpgman-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
 if [ -f gpgman.1 ]; then
     gzip -c -9 gpgman.1 > %{buildroot}%{_mandir}/man1/gpgman.1.gz
     ln -sf gpgman.1.gz %{buildroot}%{_mandir}/man1/gpgman-cli.1.gz
@@ -229,7 +229,7 @@ fi
 %{_bindir}/gpgman
 %{_bindir}/gpgman-cli
 %{_datadir}/applications/io.github.smiley_mcsmiles.GPGMan.desktop
-%{_datadir}/icons/hicolor/scalable/apps/gpgman-icon.svg
+%{_datadir}/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
 %{_mandir}/man1/gpgman*.1*
 %doc %{_datadir}/doc/gpgman/*
 
@@ -288,7 +288,7 @@ package() {
     ln -s /opt/gpgman/main.py "\${pkgdir}/usr/bin/gpgman-cli"
 
     install -m644 "\${pkgdir}/opt/gpgman/io.github.smiley_mcsmiles.GPGMan.desktop" "\${pkgdir}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
-    install -m644 "\${pkgdir}/opt/gpgman/gpgman-icon.svg" "\${pkgdir}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    install -m644 "\${pkgdir}/opt/gpgman/gpgman-icon.svg" "\${pkgdir}/usr/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg"
     [ -f "\${pkgdir}/opt/gpgman/gpgman.1" ] && install -m644 "\${pkgdir}/opt/gpgman/gpgman.1" "\${pkgdir}/usr/share/man/man1/gpgman.1" && ln -sf gpgman.1 "\${pkgdir}/usr/share/man/man1/gpgman-cli.1"
     [ -f "\${pkgdir}/opt/gpgman/LICENSE" ] && install -m644 "\${pkgdir}/opt/gpgman/LICENSE" "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
 }
@@ -319,7 +319,7 @@ EOF
     ln -sf /opt/gpgman/main.py "${PKG_ROOT}/usr/bin/gpgman"
     ln -sf /opt/gpgman/main.py "${PKG_ROOT}/usr/bin/gpgman-cli"
     cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${PKG_ROOT}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
-    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${PKG_ROOT}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${PKG_ROOT}/usr/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg"
     if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
         cp "${SCRIPT_DIR}/gpgman.1" "${PKG_ROOT}/usr/share/man/man1/gpgman.1"
         ln -sf gpgman.1 "${PKG_ROOT}/usr/share/man/man1/gpgman-cli.1"
@@ -384,7 +384,7 @@ build_openbsd() {
     ln -sf /usr/local/share/gpgman/main.py "${OBSD_ROOT}/usr/local/bin/gpgman"
     ln -sf /usr/local/share/gpgman/main.py "${OBSD_ROOT}/usr/local/bin/gpgman-cli"
     sed -e "s|/opt/gpgman|/usr/local/share/gpgman|g" "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" > "${OBSD_ROOT}/usr/local/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
-    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${OBSD_ROOT}/usr/local/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
+    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${OBSD_ROOT}/usr/local/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg"
     if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
         cp "${SCRIPT_DIR}/gpgman.1" "${OBSD_ROOT}/usr/local/man/man1/gpgman.1"
         ln -sf gpgman.1 "${OBSD_ROOT}/usr/local/man/man1/gpgman-cli.1"
@@ -432,7 +432,7 @@ do-install:
 	\${INSTALL_DATA_DIR} \${PREFIX}/share/applications
 	\${INSTALL_DATA} \${WRKSRC}/io.github.smiley_mcsmiles.GPGMan.desktop \${PREFIX}/share/applications/
 	\${INSTALL_DATA_DIR} \${PREFIX}/share/icons/hicolor/scalable/apps
-	\${INSTALL_DATA} \${WRKSRC}/gpgman-icon.svg \${PREFIX}/share/icons/hicolor/scalable/apps/
+	\${INSTALL_DATA} \${WRKSRC}/gpgman-icon.svg \${PREFIX}/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
 
 .include <bsd.port.mk>
 EOF
@@ -482,7 +482,7 @@ do_install() {
     ln -sf /opt/gpgman/main.py \${DESTDIR}/usr/bin/gpgman-cli
 
     vinstall io.github.smiley_mcsmiles.GPGMan.desktop 644 usr/share/applications/
-    vinstall gpgman-icon.svg 644 usr/share/icons/hicolor/scalable/apps/
+    vinstall gpgman-icon.svg 644 usr/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
     [ -f gpgman.1 ] && vman gpgman.1
     vlicense LICENSE
 }
@@ -564,30 +564,30 @@ build_appimage() {
 
     # Root desktop & icon files required by AppImage spec:
     # appimagetool expects:
-    # 1. Desktop file with 'Icon=gpgman-icon' or 'Icon=gpgman' at root
+    # 1. Desktop file with 'Icon=io.github.smiley_mcsmiles.GPGMan' at root
     # 2. Icon file '<Icon>.png' or '<Icon>.svg' at root matching desktop file
     # 3. .DirIcon pointing to the icon
     # 4. Standard AppStream metadata in usr/share/metainfo/
-    sed -e "s|^Icon=.*|Icon=gpgman-icon|" \
+    sed -e "s|^Icon=.*|Icon=io.github.smiley_mcsmiles.GPGMan|" \
         -e "s|^Exec=.*|Exec=gpgman %F|" \
         -e "s|^Categories=.*|Categories=System;Security;GTK;|" \
         "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" > "${APPDIR}/io.github.smiley_mcsmiles.GPGMan.desktop"
     cp "${APPDIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${APPDIR}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
 
     # Copy icons to root and icon themes
-    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/gpgman-icon.svg"
+    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/io.github.smiley_mcsmiles.GPGMan.svg"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/gpgman.svg"
-    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
-    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/usr/share/pixmaps/gpgman-icon.svg"
+    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/usr/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg"
+    cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/usr/share/pixmaps/io.github.smiley_mcsmiles.GPGMan.svg"
 
     if [ -f "${SCRIPT_DIR}/gpgman-icon.png" ]; then
-        cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/gpgman-icon.png"
+        cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/io.github.smiley_mcsmiles.GPGMan.png"
         cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/gpgman.png"
-        cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/gpgman-icon.png"
-        cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/usr/share/pixmaps/gpgman-icon.png"
-        ln -sf gpgman-icon.png "${APPDIR}/.DirIcon"
+        cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/usr/share/icons/hicolor/256x256/apps/io.github.smiley_mcsmiles.GPGMan.png"
+        cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/usr/share/pixmaps/io.github.smiley_mcsmiles.GPGMan.png"
+        ln -sf io.github.smiley_mcsmiles.GPGMan.png "${APPDIR}/.DirIcon"
     else
-        ln -sf gpgman-icon.svg "${APPDIR}/.DirIcon"
+        ln -sf io.github.smiley_mcsmiles.GPGMan.svg "${APPDIR}/.DirIcon"
     fi
 
     # Avoid appstreamcli validation aborts across varying host distro versions
@@ -657,10 +657,8 @@ modules:
       - ln -sf /app/share/gpgman/main.py /app/bin/gpgman
       - ln -sf /app/share/gpgman/main.py /app/bin/gpgman-cli
       - install -m644 io.github.smiley_mcsmiles.GPGMan.desktop /app/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop
-      - sed -i 's/^Icon=.*/Icon=io.github.smiley_mcsmiles.GPGMan/' /app/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop
       - install -m644 io.github.smiley_mcsmiles.GPGMan.metainfo.xml /app/share/metainfo/io.github.smiley_mcsmiles.GPGMan.metainfo.xml
       - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
-      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/gpgman-icon.svg
     sources:
       - type: dir
         path: ../../

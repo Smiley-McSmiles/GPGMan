@@ -1,0 +1,37 @@
+# REFERENCE ONLY - AI-generated. Do NOT submit this file to Flathub.
+# Flathub's generative AI policy forbids AI-generated or AI-assisted content in
+# submitted manifests. Use this only as a cross-check for a manifest you write yourself,
+# then delete this file.
+#
+# Before building: tag the release (git tag v1.3.4 && git push origin v1.3.4) and set
+# `commit` to the tag's hash (git rev-parse v1.3.4^{commit}).
+app-id: io.github.smiley_mcsmiles.GPGMan
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: gpgman
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=~/.gnupg
+
+modules:
+  - name: gpgman
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 main.py /app/share/gpgman/main.py
+      - cp -r gpgman /app/share/gpgman/
+      - install -d /app/bin
+      - ln -s /app/share/gpgman/main.py /app/bin/gpgman
+      - ln -s /app/share/gpgman/main.py /app/bin/gpgman-cli
+      - install -Dm644 io.github.smiley_mcsmiles.GPGMan.desktop -t /app/share/applications
+      - install -Dm644 io.github.smiley_mcsmiles.GPGMan.metainfo.xml -t /app/share/metainfo
+      - install -Dm644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
+    sources:
+      - type: git
+        url: https://github.com/Smiley-McSmiles/GPGMan.git
+        tag: v1.3.4
+        commit: REPLACE_WITH_TAG_COMMIT_HASH

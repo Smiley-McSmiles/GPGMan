@@ -23,7 +23,10 @@ def run_gui(argv: list[str]) -> int:
     # shows the proper name and icon in the dock / task bar.
     GLib.set_prgname(__app_id__)
     GLib.set_application_name("GPGMan")
-    Gtk.Window.set_default_icon_name("gpgman-icon")
+    from gi.repository import Gdk
+    display = Gdk.Display.get_default()
+    has_id_icon = bool(display) and Gtk.IconTheme.get_for_display(display).has_icon(__app_id__)
+    Gtk.Window.set_default_icon_name(__app_id__ if has_id_icon else "gpgman-icon")
 
     class GpgManApplication(Adw.Application):
         def __init__(self):

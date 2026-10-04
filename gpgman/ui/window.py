@@ -12,6 +12,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk
 
+from gpgman import __app_id__
 from gpgman.gpg_backend import GPGBackend
 from gpgman.ui.clearsign_view import ClearsignView
 from gpgman.ui.files_view import FilesView
@@ -101,6 +102,14 @@ def _iter_descendants(widget):
         yield child
         yield from _iter_descendants(child)
         child = child.get_next_sibling()
+
+
+def _app_icon_name() -> str:
+    """Theme icon named after the app ID when installed (incl. Flatpak), else the bundled one."""
+    display = Gdk.Display.get_default()
+    if display and Gtk.IconTheme.get_for_display(display).has_icon(__app_id__):
+        return __app_id__
+    return "gpgman-icon"
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -260,8 +269,8 @@ class MainWindow(Adw.ApplicationWindow):
             for candidate in [
                 "/opt/gpgman/gpgman-icon.svg",
                 "/usr/local/share/gpgman/gpgman-icon.svg",
-                "/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg",
-                "/usr/share/pixmaps/gpgman-icon.svg",
+                "/usr/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg",
+                "/usr/share/pixmaps/io.github.smiley_mcsmiles.GPGMan.svg",
             ]:
                 if os.path.exists(candidate):
                     icon_path = candidate
@@ -270,7 +279,7 @@ class MainWindow(Adw.ApplicationWindow):
         dialog = Adw.AboutWindow(
             transient_for=self,
             application_name="GPGMan",
-            application_icon="gpgman-icon",
+            application_icon=_app_icon_name(),
             developer_name="WOOSAH",
             developers=["WOOSAH (Lead Architect)", "Gemini 3.8 (Engineer)"],
             version="1.3.4",
@@ -288,7 +297,7 @@ class MainWindow(Adw.ApplicationWindow):
                 texture = Gdk.Texture.new_from_file(gfile)
                 dialog.set_logo(texture)
             except Exception:
-                dialog.set_application_icon("gpgman-icon")
+                dialog.set_application_icon(_app_icon_name())
 
         added = self._add_donation_row(dialog)
 
