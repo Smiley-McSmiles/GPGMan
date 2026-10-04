@@ -285,7 +285,7 @@ class MainWindow(Adw.ApplicationWindow):
             except Exception:
                 dialog.set_application_icon("gpgman-icon")
 
-        self._add_donation_row(dialog)
+        added = self._add_donation_row(dialog)
 
         # Allow ESC to close
         ctrl = Gtk.EventControllerKey.new()
@@ -293,33 +293,44 @@ class MainWindow(Adw.ApplicationWindow):
         dialog.add_controller(ctrl)
 
         dialog.present()
+        if not added:
+            # Retry once the dialog is mapped, in case its rows are built lazily.
+            GLib.idle_add(lambda: self._add_donation_row(dialog) and False)
 
-    def _add_donation_row(self, dialog: Adw.AboutWindow):
+    def _add_donation_row(self, dialog: Adw.AboutWindow) -> bool:
         """Insert a donation row between the "Credits" and "Legal" rows of the About dialog.
 
-        Adw.AboutWindow has no API for custom rows, so locate its list box
-        and insert one. If the layout differs, the row is simply skipped.
+        Adw.AboutWindow has no API for custom rows, so find the list rows by
+        their label text and insert one in between. Returns True on success;
+        if the layout differs, the row is simply skipped.
         """
         try:
-            for listbox in _iter_descendants(dialog):
-                if not isinstance(listbox, Gtk.ListBox):
-                    continue
-                rows = []
-                row = listbox.get_first_child()
-                while row is not None:
-                    rows.append(row)
-                    row = row.get_next_sibling()
-                titles = [r.get_title() if isinstance(r, Adw.ActionRow) else None for r in rows]
-                if "Credits" not in titles or "Legal" not in titles:
-                    continue
+            def row_for(label_text):
+                for w in _iter_descendants(dialog):
+                    if isinstance(w, Gtk.Label) and w.get_text().strip() == label_text:
+                        parent = w.get_parent()
+                        while parent is not None and not isinstance(parent, Gtk.ListBoxRow):
+                            parent = parent.get_parent()
+                        if parent is not None and isinstance(parent.get_parent(), Gtk.ListBox):
+                            return parent
+                return None
 
-                donate_row = Adw.ActionRow(title=DONATION_BUTTON_LABEL, activatable=True)
-                donate_row.add_suffix(Gtk.Image.new_from_icon_name("edit-copy-symbolic"))
-                donate_row.connect("activated", self._on_donate_clicked)
-                listbox.insert(donate_row, titles.index("Legal"))
-                return
+            legal_row = row_for("Legal")
+            credits_row = row_for("Credits")
+            if legal_row is None or credits_row is None:
+                return False
+            listbox = legal_row.get_parent()
+            if listbox is not credits_row.get_parent():
+                return False
+
+            donate_row = Adw.ActionRow(title=DONATION_BUTTON_LABEL, activatable=True)
+            donate_row.add_suffix(Gtk.Image.new_from_icon_name("edit-copy-symbolic"))
+            donate_row.connect("activated", self._on_donate_clicked)
+            listbox.insert(donate_row, legal_row.get_index())
+            return True
         except Exception as exc:
             print(f"Warning: could not add donation row to About dialog: {exc}", file=sys.stderr)
+            return False
 
     def _on_donate_clicked(self, _):
         Gdk.Display.get_default().get_clipboard().set(DONATION_TEXT)
