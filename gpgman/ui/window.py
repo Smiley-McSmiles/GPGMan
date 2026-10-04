@@ -89,8 +89,9 @@ textview text {
 DONATION_BUTTON_LABEL = "Donate"  # TODO: custom button text
 DONATION_PAGE_TITLE = "Donate"  # TODO: custom sub-page title
 DONATION_OPTIONS = [
-    ("Option 1", ""),  # TODO: custom text copied for Option 1
-    ("Option 2", ""),  # TODO: custom text copied for Option 2
+    ("BTC", "bc1qy2gtdhnfxp9dcs6v9jda748npmsjx3jgwp99mx"),  # TODO: custom text copied for Option 1
+    ("XMR", "82xtMVSmesuLjPtgHfBCEhM5Fpqh1SLLNf9pzHRRNPqQZsvrnmoM1ZGC7AiLyPfsufdyrMWHrWYV2hsC8jc5rEBVLMHWTLy"),  # TODO: custom text copied for Option 2
+    ("CashApp", "$SmileyMcSmiles"),  # TODO: custom text copied for Option 3
 ]
 
 
@@ -237,43 +238,6 @@ class MainWindow(Adw.ApplicationWindow):
         toast.set_timeout(timeout)
         self.toast_overlay.add_toast(toast)
 
-    def open_asc_file(self, path: str) -> None:
-        """Open an ASCII-armored file (.asc) passed by the desktop or CLI.
-
-        Key blocks are imported; encrypted messages are loaded into the
-        Decrypt tab; signed messages are loaded into the Verify tab.
-        """
-        try:
-            with open(path, "r", encoding="utf-8", errors="replace") as f:
-                text = f.read(8 * 1024 * 1024)
-        except OSError as exc:
-            self.show_toast(f"Could not open {os.path.basename(path)}: {exc}")
-            return
-        name = os.path.basename(path)
-
-        if "-----BEGIN PGP MESSAGE-----" in text:
-            self.messages_view.decrypt_input_tv.get_buffer().set_text(text)
-            self.messages_view.view_stack.set_visible_child_name("decrypt")
-            self.view_stack.set_visible_child_name("messages")
-            self.show_toast(f"Loaded {name} into Decrypt Message.")
-        elif "-----BEGIN PGP SIGNED MESSAGE-----" in text:
-            self.clearsign_view.verify_input_tv.get_buffer().set_text(text)
-            self.clearsign_view.view_stack.set_visible_child_name("verify_text")
-            self.view_stack.set_visible_child_name("clearsign")
-            self.show_toast(f"Loaded {name} into Verify Text.")
-        elif "-----BEGIN PGP SIGNATURE-----" in text:
-            self.clearsign_view.view_stack.set_visible_child_name("verify_file")
-            self.view_stack.set_visible_child_name("clearsign")
-            self.show_toast(f"{name} is a detached signature; choose the signed file to verify.")
-        else:
-            success, count, msg = self.backend.import_key_file(path)
-            if success:
-                self.reload_all_views(notify=False)
-                self.view_stack.set_visible_child_name("keys")
-                self.show_toast(f"Imported {count} key(s) from {name}.")
-            else:
-                self.show_toast(f"Could not import {name}: {msg}")
-
     def reload_all_views(self, notify: bool = False):
         self.keys_view.reload_keys()
         self.messages_view.reload_keys()
@@ -309,7 +273,7 @@ class MainWindow(Adw.ApplicationWindow):
             application_icon="gpgman-icon",
             developer_name="WOOSAH",
             developers=["WOOSAH (Lead Architect)", "Gemini 3.8 (Engineer)"],
-            version="1.3.3",
+            version="1.3.2",
             copyright="© 2026 WOOSAH &amp; Gemini 3.8",
             comments="Dual-Style OpenPGP Cryptographic Suite featuring a modern GTK4 / Libadwaita desktop GUI and 1:1 feature-parity terminal CLI.",
             website="https://github.com/Smiley-McSmiles/GPGMan",
