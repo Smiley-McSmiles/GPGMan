@@ -5,6 +5,7 @@ Main Application Window - Libadwaita Application Window.
 from __future__ import annotations
 
 import os
+import sys
 
 import gi
 gi.require_version("Gtk", "4.0")
@@ -78,6 +79,28 @@ textview text {
     padding: 8px 10px;
 }
 """
+
+
+# --- Donation menu (About dialog) --------------------------------------------
+# TODO: Replace the placeholders below with your own text.
+# DONATION_BUTTON_LABEL is the title of the row in the About dialog; it opens a
+# sub-page (like Credits / Legal) listing the options below. Each option is
+# (button title, text copied to the user's clipboard when pressed).
+DONATION_BUTTON_LABEL = "Donate"  # TODO: custom button text
+DONATION_PAGE_TITLE = "Donate"  # TODO: custom sub-page title
+DONATION_OPTIONS = [
+    ("BTC", "bc1qy2gtdhnfxp9dcs6v9jda748npmsjx3jgwp99mx"),  # TODO: custom text copied for Option 1
+    ("XMR", "82xtMVSmesuLjPtgHfBCEhM5Fpqh1SLLNf9pzHRRNPqQZsvrnmoM1ZGC7AiLyPfsufdyrMWHrWYV2hsC8jc5rEBVLMHWTLy"),  # TODO: custom text copied for Option 2
+    ("CashApp", "$SmileyMcSmiles"),  # TODO: custom text copied for Option 3
+]
+
+
+def _iter_descendants(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        yield child
+        yield from _iter_descendants(child)
+        child = child.get_next_sibling()
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -267,9 +290,95 @@ class MainWindow(Adw.ApplicationWindow):
             except Exception:
                 dialog.set_application_icon("gpgman-icon")
 
+        added = self._add_donation_row(dialog)
+
         # Allow ESC to close
         ctrl = Gtk.EventControllerKey.new()
         ctrl.connect("key-pressed", lambda c, k, code, s: dialog.close() if k == Gdk.KEY_Escape else False)
         dialog.add_controller(ctrl)
 
         dialog.present()
+        if not added:
+            # Retry once the dialog is mapped, in case its rows are built lazily.
+            GLib.idle_add(lambda: self._add_donation_row(dialog) and False)
+
+    def _add_donation_row(self, dialog: Adw.AboutWindow) -> bool:
+        """Insert a donation row between the "Credits" and "Legal" rows of the About dialog.
+
+        Adw.AboutWindow has no API for custom rows, so find the list rows by
+        their label text and insert one in between. Returns True on success;
+        if the layout differs, the row is simply skipped.
+        """
+        try:
+            def row_for(label_text):
+                for w in _iter_descendants(dialog):
+                    if isinstance(w, Gtk.Label) and w.get_text().strip() == label_text:
+                        parent = w.get_parent()
+                        while parent is not None and not isinstance(parent, Gtk.ListBoxRow):
+                            parent = parent.get_parent()
+                        if parent is not None and isinstance(parent.get_parent(), Gtk.ListBox):
+                            return parent
+                return None
+
+            legal_row = row_for("Legal")
+            credits_row = row_for("Credits")
+            if legal_row is None or credits_row is None:
+                return False
+            listbox = legal_row.get_parent()
+            if listbox is not credits_row.get_parent():
+                return False
+
+            donate_row = Adw.ActionRow(title=DONATION_BUTTON_LABEL, activatable=True)
+            donate_row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+            donate_row.connect("activated", lambda _: self._open_donation_page(dialog))
+            listbox.insert(donate_row, legal_row.get_index())
+            return True
+        except Exception as exc:
+            print(f"Warning: could not add donation row to About dialog: {exc}", file=sys.stderr)
+            return False
+
+    def _build_donation_content(self) -> Gtk.Widget:
+        group = Adw.PreferencesGroup()
+        for title, text in DONATION_OPTIONS:
+            row = Adw.ActionRow(title=title, activatable=True)
+            row.add_suffix(Gtk.Image.new_from_icon_name("edit-copy-symbolic"))
+            row.connect("activated", lambda _, t=text: self._copy_donation_text(t))
+            group.add(row)
+        clamp = Adw.Clamp(maximum_size=480)
+        clamp.set_margin_top(18)
+        clamp.set_margin_bottom(18)
+        clamp.set_margin_start(12)
+        clamp.set_margin_end(12)
+        clamp.set_child(group)
+        return clamp
+
+    def _open_donation_page(self, dialog: Adw.AboutWindow):
+        """Push a sub-page inside the About dialog, like Credits / Legal."""
+        nav = None
+        if hasattr(Adw, "NavigationView"):
+            nav = next((w for w in _iter_descendants(dialog) if isinstance(w, Adw.NavigationView)), None)
+
+        if nav is not None:
+            toolbar = Adw.ToolbarView()
+            toolbar.add_top_bar(Adw.HeaderBar())
+            scrolled = Gtk.ScrolledWindow(vexpand=True, hscrollbar_policy=Gtk.PolicyType.NEVER)
+            scrolled.set_child(self._build_donation_content())
+            toolbar.set_content(scrolled)
+            nav.push(Adw.NavigationPage.new(toolbar, DONATION_PAGE_TITLE))
+            return
+
+        # Older libadwaita without NavigationView: show a small modal window instead.
+        win = Adw.Window(transient_for=dialog, modal=True, title=DONATION_PAGE_TITLE)
+        win.set_default_size(380, 240)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        box.append(Adw.HeaderBar())
+        box.append(self._build_donation_content())
+        win.set_content(box)
+        ctrl = Gtk.EventControllerKey.new()
+        ctrl.connect("key-pressed", lambda c, k, code, s: win.close() if k == Gdk.KEY_Escape else False)
+        win.add_controller(ctrl)
+        win.present()
+
+    def _copy_donation_text(self, text: str):
+        Gdk.Display.get_default().get_clipboard().set(text)
+        self.show_toast("Copied to clipboard.")

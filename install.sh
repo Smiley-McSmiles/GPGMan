@@ -75,7 +75,7 @@ uninstall_gpgman() {
         echo -e "  ${GREEN}✓${NC} Removed $BIN_DIR/gpgman-cli"
     fi
 
-    rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.2
+    rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.1
     if [ -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop" ]; then
         rm -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
         echo -e "  ${GREEN}✓${NC} Removed $DESKTOP_DIR/org.gpgman.GpgMan.desktop"
@@ -123,7 +123,7 @@ fi
 check_root "$@"
 
 echo -e "${BLUE}${BOLD}========================================${NC}"
-echo -e "${BLUE}${BOLD}        GPGMan v1.3.2 Installer ($UNAME_S)      ${NC}"
+echo -e "${BLUE}${BOLD}        GPGMan v1.3.3 Installer ($UNAME_S)      ${NC}"
 echo -e "${BLUE}${BOLD}========================================${NC}"
 
 # Check for required system packages
@@ -207,7 +207,7 @@ echo -e "  ${GREEN}✓${NC} Installed icons to system icon directories"
 
 # 5. Move/install .desktop file
 echo -e "${BLUE}==> Installing desktop entry to $DESKTOP_DIR...${NC}"
-rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.2
+rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.1
 sed -e "s|/opt/gpgman|$INSTALL_DIR|g" "$SCRIPT_DIR/org.gpgman.GpgMan.desktop" > "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
 chmod 644 "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
 echo -e "  ${GREEN}✓${NC} Installed $DESKTOP_DIR/org.gpgman.GpgMan.desktop"
