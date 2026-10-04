@@ -106,7 +106,7 @@ This produces all artifacts inside `dist/`:
 - **Void Linux**: `dist/void-linux/template` and `dist/gpgman-1.3.3_1.void.tar.gz`
 - **Standalone Portable Tarball**: `dist/gpgman-1.3.3-linux-portable.tar.gz`
 - **AppImage**: `dist/GPGMan-1.3.3-x86_64.AppImage` (or self-contained AppDir bundle)
-- **Flatpak**: `dist/gpgman-1.3.3.flatpak` (and `dist/flatpak/org.gpgman.GpgMan.yaml`)
+- **Flatpak**: `dist/gpgman-1.3.3.flatpak` (and `dist/flatpak/io.github.smiley_mcsmiles.GPGMan.yaml`)
 - **Checksums**: `dist/SHA256SUMS`
 
 ### Build Individual Package Formats:

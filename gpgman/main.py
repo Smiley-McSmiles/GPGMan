@@ -19,7 +19,7 @@ def run_gui(argv: list[str]) -> int:
     from gi.repository import Adw, Gio, GLib, Gtk
     from gpgman.ui.window import MainWindow
 
-    # Match the installed desktop entry (org.gpgman.GpgMan.desktop) so the shell
+    # Match the installed desktop entry (io.github.smiley_mcsmiles.GPGMan.desktop) so the shell
     # shows the proper name and icon in the dock / task bar.
     GLib.set_prgname(__app_id__)
     GLib.set_application_name("GPGMan")

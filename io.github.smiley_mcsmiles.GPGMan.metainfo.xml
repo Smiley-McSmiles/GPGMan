@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>org.gpgman.GpgMan</id>
+  <id>io.github.smiley_mcsmiles.GPGMan</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <name>GPGMan</name>
   <summary>OpenPGP and GnuPG key manager with a GUI and CLI</summary>
-  <developer id="org.gpgman">
+  <developer id="io.github.smiley_mcsmiles">
     <name>WOOSAH</name>
   </developer>
   <description>
@@ -16,7 +16,7 @@
       <li>Sign and verify text and files</li>
     </ul>
   </description>
-  <launchable type="desktop-id">org.gpgman.GpgMan.desktop</launchable>
+  <launchable type="desktop-id">io.github.smiley_mcsmiles.GPGMan.desktop</launchable>
   <url type="homepage">https://github.com/Smiley-McSmiles/GPGMan</url>
   <url type="vcs-browser">https://github.com/Smiley-McSmiles/GPGMan</url>
   <url type="bugtracker">https://github.com/Smiley-McSmiles/GPGMan/issues</url>

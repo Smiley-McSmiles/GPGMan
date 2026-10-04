@@ -76,9 +76,10 @@ uninstall_gpgman() {
     fi
 
     rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.1
-    if [ -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop" ]; then
-        rm -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
-        echo -e "  ${GREEN}✓${NC} Removed $DESKTOP_DIR/org.gpgman.GpgMan.desktop"
+    rm -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"  # legacy ID from <= 1.3.3
+    if [ -f "$DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop" ]; then
+        rm -f "$DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop"
+        echo -e "  ${GREEN}✓${NC} Removed $DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop"
     fi
 
     if [ -f "$ICON_DIR/gpgman-icon.svg" ]; then
@@ -176,7 +177,7 @@ cp "$SCRIPT_DIR/gpgman-icon.svg" "$INSTALL_DIR/"
 if [ -f "$SCRIPT_DIR/gpgman-icon.png" ]; then
     cp "$SCRIPT_DIR/gpgman-icon.png" "$INSTALL_DIR/"
 fi
-cp "$SCRIPT_DIR/org.gpgman.GpgMan.desktop" "$INSTALL_DIR/"
+cp "$SCRIPT_DIR/io.github.smiley_mcsmiles.GPGMan.desktop" "$INSTALL_DIR/"
 if [ -d "$SCRIPT_DIR/icons" ]; then
     cp -r "$SCRIPT_DIR/icons" "$INSTALL_DIR/"
 fi
@@ -208,9 +209,10 @@ echo -e "  ${GREEN}✓${NC} Installed icons to system icon directories"
 # 5. Move/install .desktop file
 echo -e "${BLUE}==> Installing desktop entry to $DESKTOP_DIR...${NC}"
 rm -f "$DESKTOP_DIR/gpgman.desktop"  # legacy name from <= 1.3.1
-sed -e "s|/opt/gpgman|$INSTALL_DIR|g" "$SCRIPT_DIR/org.gpgman.GpgMan.desktop" > "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
-chmod 644 "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"
-echo -e "  ${GREEN}✓${NC} Installed $DESKTOP_DIR/org.gpgman.GpgMan.desktop"
+rm -f "$DESKTOP_DIR/org.gpgman.GpgMan.desktop"  # legacy ID from <= 1.3.3
+sed -e "s|/opt/gpgman|$INSTALL_DIR|g" "$SCRIPT_DIR/io.github.smiley_mcsmiles.GPGMan.desktop" > "$DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop"
+chmod 644 "$DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop"
+echo -e "  ${GREEN}✓${NC} Installed $DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop"
 
 # 6. Install manual page
 if [ -f "$SCRIPT_DIR/gpgman.1" ]; then
