@@ -677,6 +677,10 @@ EOF
         return 0
     fi
 
+    # --user builds need a user-level flathub remote (a system-wide one is not visible to them).
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+        || log_warn "Could not add the user flathub remote."
+
     (
         cd "${FLATPAK_DIR}" &&
         flatpak-builder --user --force-clean --install-deps-from=flathub \
