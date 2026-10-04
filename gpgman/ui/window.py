@@ -5,6 +5,7 @@ Main Application Window - Libadwaita Application Window.
 from __future__ import annotations
 
 import os
+import sys
 
 import gi
 gi.require_version("Gtk", "4.0")
@@ -78,6 +79,23 @@ textview text {
     padding: 8px 10px;
 }
 """
+
+
+# --- Donation button (About dialog) -----------------------------------------
+# TODO: Replace the placeholders below with your own text.
+# DONATION_BUTTON_LABEL is the title shown on the button in the About dialog.
+# DONATION_TEXT is what gets copied to the user's clipboard when they press it
+# (e.g. a crypto address, a donation URL, or a short message).
+DONATION_BUTTON_LABEL = "Donate"  # TODO: custom button text
+DONATION_TEXT = ""  # TODO: custom text copied to the clipboard
+
+
+def _iter_descendants(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        yield child
+        yield from _iter_descendants(child)
+        child = child.get_next_sibling()
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -267,9 +285,42 @@ class MainWindow(Adw.ApplicationWindow):
             except Exception:
                 dialog.set_application_icon("gpgman-icon")
 
+        self._add_donation_row(dialog)
+
         # Allow ESC to close
         ctrl = Gtk.EventControllerKey.new()
         ctrl.connect("key-pressed", lambda c, k, code, s: dialog.close() if k == Gdk.KEY_Escape else False)
         dialog.add_controller(ctrl)
 
         dialog.present()
+
+    def _add_donation_row(self, dialog: Adw.AboutWindow):
+        """Insert a donation row between the "Credits" and "Legal" rows of the About dialog.
+
+        Adw.AboutWindow has no API for custom rows, so locate its list box
+        and insert one. If the layout differs, the row is simply skipped.
+        """
+        try:
+            for listbox in _iter_descendants(dialog):
+                if not isinstance(listbox, Gtk.ListBox):
+                    continue
+                rows = []
+                row = listbox.get_first_child()
+                while row is not None:
+                    rows.append(row)
+                    row = row.get_next_sibling()
+                titles = [r.get_title() if isinstance(r, Adw.ActionRow) else None for r in rows]
+                if "Credits" not in titles or "Legal" not in titles:
+                    continue
+
+                donate_row = Adw.ActionRow(title=DONATION_BUTTON_LABEL, activatable=True)
+                donate_row.add_suffix(Gtk.Image.new_from_icon_name("edit-copy-symbolic"))
+                donate_row.connect("activated", self._on_donate_clicked)
+                listbox.insert(donate_row, titles.index("Legal"))
+                return
+        except Exception as exc:
+            print(f"Warning: could not add donation row to About dialog: {exc}", file=sys.stderr)
+
+    def _on_donate_clicked(self, _):
+        Gdk.Display.get_default().get_clipboard().set(DONATION_TEXT)
+        self.show_toast("Copied to clipboard.")
