@@ -273,7 +273,7 @@ class MainWindow(Adw.ApplicationWindow):
             application_icon="gpgman-icon",
             developer_name="WOOSAH",
             developers=["WOOSAH (Lead Architect)", "Gemini 3.8 (Engineer)"],
-            version="1.3.2",
+            version="1.3.3",
             copyright="© 2026 WOOSAH &amp; Gemini 3.8",
             comments="Dual-Style OpenPGP Cryptographic Suite featuring a modern GTK4 / Libadwaita desktop GUI and 1:1 feature-parity terminal CLI.",
             website="https://github.com/Smiley-McSmiles/GPGMan",
