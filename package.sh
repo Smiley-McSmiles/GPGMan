@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="1.3.3"
+VERSION="1.3.4"
 APP_NAME="gpgman"
 PKG_NAME="gpgman"
 SUMMARY="Dual-style GTK4/Libadwaita GUI and CLI OpenPGP & GnuPG Suite"
@@ -239,6 +239,7 @@ fi
 - Release 1.3.1 added ability to press ENTER to encrypt/decrpt with passphrase (GTK)
 - Release 1.3.2 adds a desktop-agnostic passphrase prompt for secret key export and fixes the app icon/name in the dock.
 - Release 1.3.3 adds drag-and-drop key import, .asc file association, and a donation menu in the About dialog.
+- Release 1.3.4 uses the file chooser portal in the Flatpak (no broad filesystem access), renames the app ID to io.github.smiley_mcsmiles.GPGMan, and prepares Flathub submission.
 EOF
 
     if command -v rpmbuild >/dev/null 2>&1; then
@@ -643,7 +644,6 @@ finish-args:
   - --socket=fallback-x11
   - --socket=wayland
   - --device=dri
-  - --filesystem=host
   - --filesystem=~/.gnupg
   - --share=network
 

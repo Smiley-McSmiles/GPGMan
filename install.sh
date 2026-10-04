@@ -124,7 +124,7 @@ fi
 check_root "$@"
 
 echo -e "${BLUE}${BOLD}========================================${NC}"
-echo -e "${BLUE}${BOLD}        GPGMan v1.3.3 Installer ($UNAME_S)      ${NC}"
+echo -e "${BLUE}${BOLD}        GPGMan v1.3.4 Installer ($UNAME_S)      ${NC}"
 echo -e "${BLUE}${BOLD}========================================${NC}"
 
 # Check for required system packages

@@ -4,7 +4,7 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <name>GPGMan</name>
-  <summary>OpenPGP and GnuPG key manager with a GUI and CLI</summary>
+  <summary>OpenPGP and GnuPG key manager</summary>
   <developer id="io.github.smiley_mcsmiles">
     <name>WOOSAH</name>
   </developer>
@@ -16,6 +16,18 @@
       <li>Sign and verify text and files</li>
     </ul>
   </description>
+  <branding>
+    <color type="primary" scheme_preference="light">#f6d26b</color>
+    <color type="primary" scheme_preference="dark">#1c3a5e</color>
+  </branding>
+  <!-- TODO (required by Flathub): add at least one real screenshot hosted at a stable URL, e.g.
+  <screenshots>
+    <screenshot type="default">
+      <caption>Managing keys in GPGMan</caption>
+      <image type="source">https://raw.githubusercontent.com/Smiley-McSmiles/GPGMan/main/screenshots/keys.png</image>
+    </screenshot>
+  </screenshots>
+  -->
   <launchable type="desktop-id">io.github.smiley_mcsmiles.GPGMan.desktop</launchable>
   <url type="homepage">https://github.com/Smiley-McSmiles/GPGMan</url>
   <url type="vcs-browser">https://github.com/Smiley-McSmiles/GPGMan</url>
@@ -37,6 +49,14 @@
     <control>touch</control>
   </supports>
   <releases>
+    <release version="1.3.4" date="2026-10-04">
+      <description>
+        <ul>
+          <li>Flatpak: file dialogs use the file chooser portal, so the app no longer needs access to all files</li>
+          <li>Application ID changed to io.github.smiley_mcsmiles.GPGMan</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.3.3" date="2026-10-04">
       <description>
         <ul>
