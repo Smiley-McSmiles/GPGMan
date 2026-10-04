@@ -1,0 +1,35 @@
+# Flathub submission manifest (builds from a pinned git tag; no network at build time).
+# Before submitting: tag the release (git tag v1.3.4 && git push origin v1.3.4) and
+# replace the commit below with the tag's commit hash (git rev-parse v1.3.4^{commit}).
+app-id: io.github.smiley_mcsmiles.GPGMan
+runtime: org.gnome.Platform
+runtime-version: '50'
+sdk: org.gnome.Sdk
+command: gpgman
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --share=network
+  - --filesystem=~/.gnupg
+
+modules:
+  - name: gpgman
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/share/gpgman /app/bin /app/share/applications /app/share/metainfo /app/share/icons/hicolor/scalable/apps
+      - cp -r gpgman /app/share/gpgman/
+      - install -m755 main.py /app/share/gpgman/
+      - ln -sf /app/share/gpgman/main.py /app/bin/gpgman
+      - ln -sf /app/share/gpgman/main.py /app/bin/gpgman-cli
+      - install -m644 io.github.smiley_mcsmiles.GPGMan.desktop /app/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop
+      - sed -i 's/^Icon=.*/Icon=io.github.smiley_mcsmiles.GPGMan/' /app/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop
+      - install -m644 io.github.smiley_mcsmiles.GPGMan.metainfo.xml /app/share/metainfo/io.github.smiley_mcsmiles.GPGMan.metainfo.xml
+      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
+      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/gpgman-icon.svg
+    sources:
+      - type: git
+        url: https://github.com/Smiley-McSmiles/GPGMan.git
+        tag: v1.3.4
+        commit: REPLACE_WITH_TAG_COMMIT_HASH

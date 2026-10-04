@@ -19,6 +19,61 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import Gio, GLib, Gtk
 
 
+def _in_flatpak() -> bool:
+    return os.path.exists("/.flatpak-info")
+
+
+def _open_portal_file_dialog(
+    parent: Optional[Gtk.Window],
+    title: str,
+    action: Gtk.FileChooserAction,
+    filters: Optional[List[Tuple[str, List[str]]]],
+    default_name: Optional[str],
+    current_folder: Optional[str],
+    on_selected: Optional[Callable[[str], None]],
+) -> None:
+    """Gtk.FileDialog; inside a Flatpak sandbox this goes through the file chooser portal,
+    so the app does not need broad filesystem access."""
+    dialog = Gtk.FileDialog()
+    dialog.set_title(title)
+    if filters:
+        store = Gio.ListStore.new(Gtk.FileFilter)
+        for filter_name, patterns in filters:
+            f = Gtk.FileFilter()
+            f.set_name(filter_name)
+            for pat in patterns:
+                f.add_pattern(pat)
+            store.append(f)
+        dialog.set_filters(store)
+    if default_name and action == Gtk.FileChooserAction.SAVE:
+        dialog.set_initial_name(default_name)
+    if current_folder and os.path.isdir(current_folder):
+        dialog.set_initial_folder(Gio.File.new_for_path(current_folder))
+
+    transient = parent if isinstance(parent, Gtk.Window) else None
+
+    def done(d, result):
+        try:
+            if action == Gtk.FileChooserAction.SAVE:
+                gfile = d.save_finish(result)
+            elif action == Gtk.FileChooserAction.SELECT_FOLDER:
+                gfile = d.select_folder_finish(result)
+            else:
+                gfile = d.open_finish(result)
+        except GLib.Error:
+            return  # cancelled or dismissed
+        path = gfile.get_path() if gfile else None
+        if path and on_selected:
+            on_selected(path)
+
+    if action == Gtk.FileChooserAction.SAVE:
+        dialog.save(transient, None, done)
+    elif action == Gtk.FileChooserAction.SELECT_FOLDER:
+        dialog.select_folder(transient, None, done)
+    else:
+        dialog.open(transient, None, done)
+
+
 def choose_file(
     parent: Optional[Gtk.Window],
     title: str,
@@ -30,10 +85,17 @@ def choose_file(
 ) -> None:
     """
     Open the file selection dialog.
-    Primary: Gtk.FileChooserDialog (self-contained within GTK4, reliable across Cinnamon,
+    In a Flatpak sandbox: Gtk.FileDialog via the file chooser portal.
+    Otherwise primary: Gtk.FileChooserDialog (self-contained within GTK4, reliable across Cinnamon,
              MATE, XFCE, GNOME without requiring Nautilus or portals).
     Fallback: System dialog utilities (zenity or kdialog) if available.
     """
+    if _in_flatpak() and hasattr(Gtk, "FileDialog"):
+        try:
+            _open_portal_file_dialog(parent, title, action, filters, default_name, current_folder, on_selected)
+            return
+        except Exception as exc:
+            print(f"[GPGMan] Portal file dialog error: {exc}. Falling back to Gtk.FileChooserDialog...")
     try:
         _open_gtk_file_chooser_dialog(
             parent=parent,

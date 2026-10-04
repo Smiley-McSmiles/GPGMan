@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="1.3.3"
+VERSION="1.3.4"
 APP_NAME="gpgman"
 PKG_NAME="gpgman"
 SUMMARY="Dual-style GTK4/Libadwaita GUI and CLI OpenPGP & GnuPG Suite"
@@ -81,7 +81,7 @@ build_deb() {
     cp "${SCRIPT_DIR}/main.py" "${DEB_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${DEB_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${DEB_ROOT}/opt/gpgman/"
-    cp "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" "${DEB_ROOT}/opt/gpgman/"
+    cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${DEB_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${DEB_ROOT}/opt/gpgman/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${DEB_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${DEB_ROOT}/usr/share/doc/gpgman/"
@@ -94,7 +94,7 @@ build_deb() {
     ln -sf "/opt/gpgman/main.py" "${DEB_ROOT}/usr/bin/gpgman-cli"
 
     # Desktop entry & Icon
-    sed -e "s|/opt/gpgman|/opt/gpgman|g" "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" > "${DEB_ROOT}/usr/share/applications/org.gpgman.GpgMan.desktop"
+    sed -e "s|/opt/gpgman|/opt/gpgman|g" "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" > "${DEB_ROOT}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${DEB_ROOT}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
 
     # Manual page
@@ -206,7 +206,7 @@ cp -r gpgman %{buildroot}/opt/gpgman/
 cp main.py %{buildroot}/opt/gpgman/
 cp gpgman-icon.svg %{buildroot}/opt/gpgman/
 [ -f gpgman-icon.png ] && cp gpgman-icon.png %{buildroot}/opt/gpgman/
-cp org.gpgman.GpgMan.desktop %{buildroot}/opt/gpgman/
+cp io.github.smiley_mcsmiles.GPGMan.desktop %{buildroot}/opt/gpgman/
 [ -f gpgman.1 ] && cp gpgman.1 %{buildroot}/opt/gpgman/
 [ -d icons ] && cp -r icons %{buildroot}/opt/gpgman/
 [ -f LICENSE ] && cp LICENSE %{buildroot}%{_datadir}/doc/gpgman/
@@ -217,7 +217,7 @@ chmod +x %{buildroot}/opt/gpgman/main.py
 ln -sf /opt/gpgman/main.py %{buildroot}%{_bindir}/gpgman
 ln -sf /opt/gpgman/main.py %{buildroot}%{_bindir}/gpgman-cli
 
-cp org.gpgman.GpgMan.desktop %{buildroot}%{_datadir}/applications/org.gpgman.GpgMan.desktop
+cp io.github.smiley_mcsmiles.GPGMan.desktop %{buildroot}%{_datadir}/applications/io.github.smiley_mcsmiles.GPGMan.desktop
 cp gpgman-icon.svg %{buildroot}%{_datadir}/icons/hicolor/scalable/apps/gpgman-icon.svg
 if [ -f gpgman.1 ]; then
     gzip -c -9 gpgman.1 > %{buildroot}%{_mandir}/man1/gpgman.1.gz
@@ -228,7 +228,7 @@ fi
 /opt/gpgman
 %{_bindir}/gpgman
 %{_bindir}/gpgman-cli
-%{_datadir}/applications/org.gpgman.GpgMan.desktop
+%{_datadir}/applications/io.github.smiley_mcsmiles.GPGMan.desktop
 %{_datadir}/icons/hicolor/scalable/apps/gpgman-icon.svg
 %{_mandir}/man1/gpgman*.1*
 %doc %{_datadir}/doc/gpgman/*
@@ -239,6 +239,7 @@ fi
 - Release 1.3.1 added ability to press ENTER to encrypt/decrpt with passphrase (GTK)
 - Release 1.3.2 adds a desktop-agnostic passphrase prompt for secret key export and fixes the app icon/name in the dock.
 - Release 1.3.3 adds drag-and-drop key import, .asc file association, and a donation menu in the About dialog.
+- Release 1.3.4 uses the file chooser portal in the Flatpak (no broad filesystem access), renames the app ID to io.github.smiley_mcsmiles.GPGMan, and prepares Flathub submission.
 EOF
 
     if command -v rpmbuild >/dev/null 2>&1; then
@@ -286,7 +287,7 @@ package() {
     ln -s /opt/gpgman/main.py "\${pkgdir}/usr/bin/gpgman"
     ln -s /opt/gpgman/main.py "\${pkgdir}/usr/bin/gpgman-cli"
 
-    install -m644 "\${pkgdir}/opt/gpgman/org.gpgman.GpgMan.desktop" "\${pkgdir}/usr/share/applications/org.gpgman.GpgMan.desktop"
+    install -m644 "\${pkgdir}/opt/gpgman/io.github.smiley_mcsmiles.GPGMan.desktop" "\${pkgdir}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
     install -m644 "\${pkgdir}/opt/gpgman/gpgman-icon.svg" "\${pkgdir}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
     [ -f "\${pkgdir}/opt/gpgman/gpgman.1" ] && install -m644 "\${pkgdir}/opt/gpgman/gpgman.1" "\${pkgdir}/usr/share/man/man1/gpgman.1" && ln -sf gpgman.1 "\${pkgdir}/usr/share/man/man1/gpgman-cli.1"
     [ -f "\${pkgdir}/opt/gpgman/LICENSE" ] && install -m644 "\${pkgdir}/opt/gpgman/LICENSE" "\${pkgdir}/usr/share/licenses/\${pkgname}/LICENSE"
@@ -309,7 +310,7 @@ EOF
     cp "${SCRIPT_DIR}/main.py" "${PKG_ROOT}/opt/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${PKG_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${PKG_ROOT}/opt/gpgman/"
-    cp "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" "${PKG_ROOT}/opt/gpgman/"
+    cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${PKG_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${PKG_ROOT}/opt/gpgman/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${PKG_ROOT}/opt/gpgman/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${PKG_ROOT}/usr/share/licenses/gpgman/LICENSE"
@@ -317,7 +318,7 @@ EOF
     chmod +x "${PKG_ROOT}/opt/gpgman/main.py"
     ln -sf /opt/gpgman/main.py "${PKG_ROOT}/usr/bin/gpgman"
     ln -sf /opt/gpgman/main.py "${PKG_ROOT}/usr/bin/gpgman-cli"
-    cp "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" "${PKG_ROOT}/usr/share/applications/org.gpgman.GpgMan.desktop"
+    cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${PKG_ROOT}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${PKG_ROOT}/usr/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
     if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
         cp "${SCRIPT_DIR}/gpgman.1" "${PKG_ROOT}/usr/share/man/man1/gpgman.1"
@@ -373,7 +374,7 @@ build_openbsd() {
     cp "${SCRIPT_DIR}/main.py" "${OBSD_ROOT}/usr/local/share/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${OBSD_ROOT}/usr/local/share/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${OBSD_ROOT}/usr/local/share/gpgman/"
-    cp "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" "${OBSD_ROOT}/usr/local/share/gpgman/"
+    cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${OBSD_ROOT}/usr/local/share/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${OBSD_ROOT}/usr/local/share/gpgman/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${OBSD_ROOT}/usr/local/share/gpgman/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${OBSD_ROOT}/usr/local/share/doc/gpgman/"
@@ -382,7 +383,7 @@ build_openbsd() {
     chmod +x "${OBSD_ROOT}/usr/local/share/gpgman/main.py"
     ln -sf /usr/local/share/gpgman/main.py "${OBSD_ROOT}/usr/local/bin/gpgman"
     ln -sf /usr/local/share/gpgman/main.py "${OBSD_ROOT}/usr/local/bin/gpgman-cli"
-    sed -e "s|/opt/gpgman|/usr/local/share/gpgman|g" "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" > "${OBSD_ROOT}/usr/local/share/applications/org.gpgman.GpgMan.desktop"
+    sed -e "s|/opt/gpgman|/usr/local/share/gpgman|g" "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" > "${OBSD_ROOT}/usr/local/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${OBSD_ROOT}/usr/local/share/icons/hicolor/scalable/apps/gpgman-icon.svg"
     if [ -f "${SCRIPT_DIR}/gpgman.1" ]; then
         cp "${SCRIPT_DIR}/gpgman.1" "${OBSD_ROOT}/usr/local/man/man1/gpgman.1"
@@ -429,7 +430,7 @@ do-install:
 	ln -sf \${PREFIX}/share/gpgman/main.py \${PREFIX}/bin/gpgman
 	ln -sf \${PREFIX}/share/gpgman/main.py \${PREFIX}/bin/gpgman-cli
 	\${INSTALL_DATA_DIR} \${PREFIX}/share/applications
-	\${INSTALL_DATA} \${WRKSRC}/org.gpgman.GpgMan.desktop \${PREFIX}/share/applications/
+	\${INSTALL_DATA} \${WRKSRC}/io.github.smiley_mcsmiles.GPGMan.desktop \${PREFIX}/share/applications/
 	\${INSTALL_DATA_DIR} \${PREFIX}/share/icons/hicolor/scalable/apps
 	\${INSTALL_DATA} \${WRKSRC}/gpgman-icon.svg \${PREFIX}/share/icons/hicolor/scalable/apps/
 
@@ -474,13 +475,13 @@ do_install() {
     vcopy gpgman opt/gpgman/
     vinstall main.py 755 opt/gpgman/
     vinstall gpgman-icon.svg 644 opt/gpgman/
-    vinstall org.gpgman.GpgMan.desktop 644 opt/gpgman/
+    vinstall io.github.smiley_mcsmiles.GPGMan.desktop 644 opt/gpgman/
     [ -d icons ] && vcopy icons opt/gpgman/
 
     ln -sf /opt/gpgman/main.py \${DESTDIR}/usr/bin/gpgman
     ln -sf /opt/gpgman/main.py \${DESTDIR}/usr/bin/gpgman-cli
 
-    vinstall org.gpgman.GpgMan.desktop 644 usr/share/applications/
+    vinstall io.github.smiley_mcsmiles.GPGMan.desktop 644 usr/share/applications/
     vinstall gpgman-icon.svg 644 usr/share/icons/hicolor/scalable/apps/
     [ -f gpgman.1 ] && vman gpgman.1
     vlicense LICENSE
@@ -508,7 +509,7 @@ build_tar() {
     cp "${SCRIPT_DIR}/package.sh" "${TAR_ROOT}/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${TAR_ROOT}/"
     [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${TAR_ROOT}/"
-    cp "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" "${TAR_ROOT}/"
+    cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${TAR_ROOT}/"
     [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${TAR_ROOT}/"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${TAR_ROOT}/"
     [ -f "${SCRIPT_DIR}/LICENSE" ] && cp "${SCRIPT_DIR}/LICENSE" "${TAR_ROOT}/"
@@ -541,7 +542,7 @@ build_appimage() {
     cp "${SCRIPT_DIR}/main.py" "${APPDIR}/usr/share/gpgman/"
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/usr/share/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman-icon.png" ] && cp "${SCRIPT_DIR}/gpgman-icon.png" "${APPDIR}/usr/share/gpgman/"
-    cp "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" "${APPDIR}/usr/share/gpgman/"
+    cp "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${APPDIR}/usr/share/gpgman/"
     [ -f "${SCRIPT_DIR}/gpgman.1" ] && cp "${SCRIPT_DIR}/gpgman.1" "${APPDIR}/usr/share/man/man1/gpgman.1" && ln -sf gpgman.1 "${APPDIR}/usr/share/man/man1/gpgman-cli.1"
     [ -d "${SCRIPT_DIR}/icons" ] && cp -r "${SCRIPT_DIR}/icons" "${APPDIR}/usr/share/gpgman/"
 
@@ -570,8 +571,8 @@ build_appimage() {
     sed -e "s|^Icon=.*|Icon=gpgman-icon|" \
         -e "s|^Exec=.*|Exec=gpgman %F|" \
         -e "s|^Categories=.*|Categories=System;Security;GTK;|" \
-        "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" > "${APPDIR}/org.gpgman.GpgMan.desktop"
-    cp "${APPDIR}/org.gpgman.GpgMan.desktop" "${APPDIR}/usr/share/applications/org.gpgman.GpgMan.desktop"
+        "${SCRIPT_DIR}/io.github.smiley_mcsmiles.GPGMan.desktop" > "${APPDIR}/io.github.smiley_mcsmiles.GPGMan.desktop"
+    cp "${APPDIR}/io.github.smiley_mcsmiles.GPGMan.desktop" "${APPDIR}/usr/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop"
 
     # Copy icons to root and icon themes
     cp "${SCRIPT_DIR}/gpgman-icon.svg" "${APPDIR}/gpgman-icon.svg"
@@ -624,43 +625,69 @@ EOF
 # ------------------------------------------------------------------------------
 # 8. Flatpak Manifest & Build
 # ------------------------------------------------------------------------------
+# GNOME runtime used for the Flatpak. Override with: GNOME_RUNTIME=51 ./package.sh --flatpak
+GNOME_RUNTIME="${GNOME_RUNTIME:-50}"
+
 build_flatpak() {
-    log_info "Building Flatpak Manifest and structure..."
+    log_info "Building Flatpak (GNOME runtime ${GNOME_RUNTIME})..."
     local FLATPAK_DIR="${DIST_DIR}/flatpak"
     mkdir -p "${FLATPAK_DIR}"
 
-    cat <<EOF > "${FLATPAK_DIR}/org.gpgman.GpgMan.yaml"
-app-id: org.gpgman.GpgMan
+    cat <<EOF > "${FLATPAK_DIR}/io.github.smiley_mcsmiles.GPGMan.yaml"
+app-id: io.github.smiley_mcsmiles.GPGMan
 runtime: org.gnome.Platform
-runtime-version: '46'
+runtime-version: '${GNOME_RUNTIME}'
 sdk: org.gnome.Sdk
 command: gpgman
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
   - --socket=wayland
-  - --filesystem=host
+  - --device=dri
   - --filesystem=~/.gnupg
   - --share=network
-  - --talk-name=org.gnome.keyring.SystemPrompter
 
 modules:
   - name: gpgman
     buildsystem: simple
     build-commands:
-      - mkdir -p /app/share/gpgman /app/bin /app/share/applications /app/share/icons/hicolor/scalable/apps
+      - mkdir -p /app/share/gpgman /app/bin /app/share/applications /app/share/metainfo /app/share/icons/hicolor/scalable/apps
       - cp -r gpgman /app/share/gpgman/
       - install -m755 main.py /app/share/gpgman/
       - ln -sf /app/share/gpgman/main.py /app/bin/gpgman
       - ln -sf /app/share/gpgman/main.py /app/bin/gpgman-cli
-      - install -m644 org.gpgman.GpgMan.desktop /app/share/applications/org.gpgman.GpgMan.desktop
-      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/org.gpgman.GpgMan.svg
+      - install -m644 io.github.smiley_mcsmiles.GPGMan.desktop /app/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop
+      - sed -i 's/^Icon=.*/Icon=io.github.smiley_mcsmiles.GPGMan/' /app/share/applications/io.github.smiley_mcsmiles.GPGMan.desktop
+      - install -m644 io.github.smiley_mcsmiles.GPGMan.metainfo.xml /app/share/metainfo/io.github.smiley_mcsmiles.GPGMan.metainfo.xml
+      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/io.github.smiley_mcsmiles.GPGMan.svg
+      - install -m644 gpgman-icon.svg /app/share/icons/hicolor/scalable/apps/gpgman-icon.svg
     sources:
       - type: dir
         path: ../../
+        skip:
+          - .git
+          - dist
+          - .flatpak-builder
 EOF
 
-    log_success "Generated Flatpak manifest: ${FLATPAK_DIR}/org.gpgman.GpgMan.yaml"
+    log_success "Generated Flatpak manifest: ${FLATPAK_DIR}/io.github.smiley_mcsmiles.GPGMan.yaml"
+
+    if ! command -v flatpak-builder >/dev/null 2>&1; then
+        log_warn "flatpak-builder not found; install it to build the Flatpak. Manifest generated only."
+        return 0
+    fi
+
+    # --user builds need a user-level flathub remote (a system-wide one is not visible to them).
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo \
+        || log_warn "Could not add the user flathub remote."
+
+    (
+        cd "${FLATPAK_DIR}" &&
+        flatpak-builder --user --force-clean --install-deps-from=flathub \
+            --repo=repo build-dir io.github.smiley_mcsmiles.GPGMan.yaml &&
+        flatpak build-bundle repo "${DIST_DIR}/gpgman-${VERSION}.flatpak" io.github.smiley_mcsmiles.GPGMan
+    ) && log_success "Built Flatpak bundle: ${DIST_DIR}/gpgman-${VERSION}.flatpak" \
+      || log_error "Flatpak build failed."
 }
 
 # ------------------------------------------------------------------------------
@@ -693,7 +720,7 @@ show_help() {
     echo "  --void        Build Void Linux template and source archive"
     echo "  --tar         Build portable standalone tarball (.tar.gz)"
     echo "  --appimage    Build standalone AppImage bundle"
-    echo "  --flatpak     Build Flatpak manifest"
+    echo "  --flatpak     Build Flatpak bundle (GNOME_RUNTIME=${GNOME_RUNTIME})"
     echo "  --clean       Clean build directories"
     echo "  --help, -h    Display this message"
     echo ""

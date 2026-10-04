@@ -9,5 +9,5 @@ Type=Application
 MimeType=application/pgp-keys;application/pgp-encrypted;application/pgp-signature;application/pgp;
 Categories=Utility;Security;System;GTK;
 StartupNotify=true
-StartupWMClass=org.gpgman.GpgMan
+StartupWMClass=io.github.smiley_mcsmiles.GPGMan
 Keywords=GPG;PGP;Cryptography;Encryption;Signature;Keyring;GTK4;
