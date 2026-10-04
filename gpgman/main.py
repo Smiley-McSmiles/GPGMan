@@ -29,12 +29,13 @@ def run_gui(argv: list[str]) -> int:
         def __init__(self):
             super().__init__(
                 application_id=__app_id__,
-                flags=Gio.ApplicationFlags.FLAGS_NONE,
+                flags=Gio.ApplicationFlags.HANDLES_OPEN,
             )
             self.backend: GPGBackend | None = None
             self.window: MainWindow | None = None
             self.connect("startup", self._on_startup)
             self.connect("activate", self._on_activate)
+            self.connect("open", self._on_open)
 
         def _on_startup(self, app):
             quit_action = Gio.SimpleAction.new("quit", None)
@@ -55,8 +56,17 @@ def run_gui(argv: list[str]) -> int:
                 self.window = MainWindow(self, self.backend)
             self.window.present()
 
+        def _on_open(self, app, files, n_files, hint):
+            # Files passed by the desktop ("Open With GPGMan") or the command line.
+            self._on_activate(app)
+            for f in files:
+                path = f.get_path()
+                if path:
+                    self.window.open_asc_file(path)
+
     app = GpgManApplication()
-    return app.run([argv[0]])
+    paths = [a for a in argv[1:] if not a.startswith("-") and os.path.isfile(a)]
+    return app.run([argv[0]] + paths)
 
 
 def main(argv=None):

@@ -55,6 +55,7 @@ class KeysView(Gtk.Box):
         self.set_margin_end(16)
 
         self._build_ui()
+        self._setup_drop_target()
         self.reload_keys()
 
     def _build_ui(self):
@@ -276,6 +277,31 @@ class KeysView(Gtk.Box):
             on_created=lambda: self.window.reload_all_views(notify=False),
         )
         dialog.present()
+
+    def _setup_drop_target(self):
+        """Accept key files (.asc, .gpg, .key, ...) dropped onto the Keys view."""
+        target = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
+        target.connect("drop", self._on_files_dropped)
+        self.add_controller(target)
+
+    def _on_files_dropped(self, _target, value, _x, _y) -> bool:
+        files = [f.get_path() for f in value.get_files() if f.get_path()]
+        if not files:
+            return False
+        total, failures = 0, []
+        for path in files:
+            success, count, msg = self.backend.import_key_file(path)
+            if success:
+                total += count
+            else:
+                failures.append(os.path.basename(path))
+        if total or not failures:
+            self.window.reload_all_views(notify=False)
+        if failures:
+            self.window.show_toast(f"Import failed for: {', '.join(failures)}")
+        else:
+            self.window.show_toast(f"Imported {total} key(s) from {len(files)} file(s).")
+        return True
 
     def _on_import_key_clicked(self, _):
         dialog = ImportKeyDialog(

@@ -567,7 +567,7 @@ build_appimage() {
     # 3. .DirIcon pointing to the icon
     # 4. Standard AppStream metadata in usr/share/metainfo/
     sed -e "s|^Icon=.*|Icon=gpgman-icon|" \
-        -e "s|^Exec=.*|Exec=gpgman|" \
+        -e "s|^Exec=.*|Exec=gpgman %F|" \
         -e "s|^Categories=.*|Categories=System;Security;GTK;|" \
         "${SCRIPT_DIR}/org.gpgman.GpgMan.desktop" > "${APPDIR}/org.gpgman.GpgMan.desktop"
     cp "${APPDIR}/org.gpgman.GpgMan.desktop" "${APPDIR}/usr/share/applications/org.gpgman.GpgMan.desktop"
