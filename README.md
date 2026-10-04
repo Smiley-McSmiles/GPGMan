@@ -1,4 +1,4 @@
-# 🔒 GPGMan v1.3.4 - OpenPGP & GnuPG Suite (GUI & CLI)
+# GPGMan v1.3.4 - OpenPGP & GnuPG Suite (GUI & CLI)
 
 <p align="center">
   <img src="gpgman-icon.svg" alt="GPGMan Logo" width="128" height="128">
