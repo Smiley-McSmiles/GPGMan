@@ -184,12 +184,28 @@ class GPGBackend:
         args: List[str],
         input_data: Optional[str | bytes] = None,
         check: bool = False,
+        passphrase: Optional[str] = None,
     ) -> Tuple[int, str, str]:
-        """Runs the gpg command with provided arguments."""
+        """Runs the gpg command with provided arguments.
+
+        ``passphrase`` is handed to gpg through a private pipe (--passphrase-fd) in
+        loopback pinentry mode, so it never appears in the process list.
+        """
         cmd = [self.gpg_binary]
         if self.gnupg_home:
             cmd.extend(["--homedir", self.gnupg_home])
-        cmd.extend(["--batch", "--no-tty"] + args)
+        cmd.extend(["--batch", "--no-tty"])
+        pass_fds: Tuple[int, ...] = ()
+        pass_read_fd = None
+        if passphrase is not None:
+            pass_read_fd, pass_write_fd = os.pipe()
+            try:
+                os.write(pass_write_fd, (passphrase + "\n").encode("utf-8"))
+            finally:
+                os.close(pass_write_fd)
+            pass_fds = (pass_read_fd,)
+            cmd.extend(["--pinentry-mode", "loopback", "--passphrase-fd", str(pass_read_fd)])
+        cmd.extend(args)
         stdin = subprocess.PIPE if input_data is not None else subprocess.DEVNULL
         
         if isinstance(input_data, str):
@@ -203,6 +219,7 @@ class GPGBackend:
                 stdin=stdin,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                pass_fds=pass_fds,
             )
             stdout, stderr = proc.communicate(input=input_bytes)
             out_str = stdout.decode("utf-8", errors="replace")
@@ -212,6 +229,9 @@ class GPGBackend:
             return proc.returncode, out_str, err_str
         except Exception as e:
             return -1, "", str(e)
+        finally:
+            if pass_read_fd is not None:
+                os.close(pass_read_fd)
 
     def _parse_timestamp(self, ts_str: str) -> Optional[str]:
         if not ts_str:
@@ -432,7 +452,7 @@ class GPGBackend:
             expire_str = "0"
 
         passphrase_val = passphrase or ""
-        cmd_args = ["--pinentry-mode", "loopback", "--passphrase", passphrase_val]
+        cmd_args = []
         primary_usage = "default"
         if usage == "sign":
             primary_usage = "sign"
@@ -441,7 +461,7 @@ class GPGBackend:
 
         cmd_args.extend(["--quick-generate-key", user_id, key_algo, primary_usage, expire_str])
 
-        code, out, err = self._run(cmd_args)
+        code, out, err = self._run(cmd_args, passphrase=passphrase_val)
         if code != 0:
             return False, err or out or "Failed to generate key."
 
@@ -451,9 +471,8 @@ class GPGBackend:
             matching = [k for k in new_keys if user_id in k.uids or (email and email in k.email)]
             if matching:
                 fpr = matching[-1].fingerprint
-                sub_args = ["--pinentry-mode", "loopback", "--passphrase", passphrase_val]
-                sub_args.extend(["--quick-add-key", fpr, sub_algo, "encr", expire_str])
-                self._run(sub_args)
+                sub_args = ["--quick-add-key", fpr, sub_algo, "encr", expire_str]
+                self._run(sub_args, passphrase=passphrase_val)
 
         return True, f"Key created successfully for '{user_id}'."
 
@@ -507,12 +526,8 @@ class GPGBackend:
         args = ["--export-secret-keys"]
         if armor:
             args.insert(0, "--armor")
-        input_data = None
-        if passphrase is not None:
-            args = ["--pinentry-mode", "loopback", "--passphrase-fd", "0"] + args
-            input_data = passphrase + "\n"
         args.append(key_id)
-        code, out, err = self._run(args, input_data=input_data)
+        code, out, err = self._run(args, passphrase=passphrase)
         if code == 0 and out.strip():
             return True, out
         return False, err or "Export secret key failed."
@@ -551,6 +566,7 @@ class GPGBackend:
         if not recipient_ids and not symmetric:
             return False, "", "No recipients selected and symmetric encryption not chosen."
 
+        run_passphrase: Optional[str] = None
         args = ["--yes"]
         if armor:
             args.append("--armor")
@@ -561,7 +577,7 @@ class GPGBackend:
         if symmetric:
             args.append("--symmetric")
             if symmetric_passphrase:
-                args.extend(["--pinentry-mode", "loopback", "--passphrase", symmetric_passphrase])
+                run_passphrase = symmetric_passphrase
 
         # If public key recipients are used
         if recipient_ids:
@@ -573,9 +589,9 @@ class GPGBackend:
         if sign_key_id:
             args.extend(["--sign", "--local-user", sign_key_id])
             if sign_passphrase and not (symmetric and symmetric_passphrase):
-                args.extend(["--pinentry-mode", "loopback", "--passphrase", sign_passphrase])
+                run_passphrase = sign_passphrase
 
-        code, out, err = self._run(args, input_data=plaintext)
+        code, out, err = self._run(args, input_data=plaintext, passphrase=run_passphrase)
         if code == 0:
             return True, out, ""
         return False, "", err or "Encryption failed."
@@ -587,9 +603,7 @@ class GPGBackend:
     ) -> Tuple[bool, str, VerifyResult, str]:
         """Decrypt text and extract signature status if present."""
         args = ["--status-fd", "2", "--decrypt", "--yes"]
-        if passphrase:
-            args.extend(["--pinentry-mode", "loopback", "--passphrase", passphrase])
-        code, out, err = self._run(args, input_data=ciphertext)
+        code, out, err = self._run(args, input_data=ciphertext, passphrase=passphrase or None)
         verify_res = self._parse_verify_output(err)
         if code == 0:
             return True, out, verify_res, ""
@@ -613,6 +627,7 @@ class GPGBackend:
         if not recipient_ids and not symmetric:
             return False, "No recipients selected and symmetric encryption not chosen."
 
+        run_passphrase: Optional[str] = None
         args = ["--yes", "-o", dest_path]
         if armor:
             args.append("--armor")
@@ -622,7 +637,7 @@ class GPGBackend:
         if symmetric:
             args.append("--symmetric")
             if symmetric_passphrase:
-                args.extend(["--pinentry-mode", "loopback", "--passphrase", symmetric_passphrase])
+                run_passphrase = symmetric_passphrase
 
         if recipient_ids:
             args.extend(["--encrypt", "--trust-model", "always"])
@@ -632,10 +647,10 @@ class GPGBackend:
         if sign_key_id:
             args.extend(["--sign", "--local-user", sign_key_id])
             if sign_passphrase and not (symmetric and symmetric_passphrase):
-                args.extend(["--pinentry-mode", "loopback", "--passphrase", sign_passphrase])
+                run_passphrase = sign_passphrase
 
         args.append(src_path)
-        code, _, err = self._run(args)
+        code, _, err = self._run(args, passphrase=run_passphrase)
         if code == 0:
             return True, f"File encrypted successfully to {dest_path}"
         return False, err or "File encryption failed."
@@ -651,11 +666,9 @@ class GPGBackend:
             return False, VerifyResult(valid=False, status="ERROR"), f"Source file does not exist: {src_path}"
 
         args = ["--status-fd", "2", "--decrypt", "--yes", "-o", dest_path]
-        if passphrase:
-            args.extend(["--pinentry-mode", "loopback", "--passphrase", passphrase])
         args.append(src_path)
 
-        code, _, err = self._run(args)
+        code, _, err = self._run(args, passphrase=passphrase or None)
         verify_res = self._parse_verify_output(err)
         if code == 0:
             return True, verify_res, f"File decrypted successfully to {dest_path}"
@@ -669,9 +682,7 @@ class GPGBackend:
     ) -> Tuple[bool, str, str]:
         """Clearsign text message."""
         args = ["--armor", "--local-user", sign_key_id, "--clear-sign", "--yes"]
-        if passphrase:
-            args.extend(["--pinentry-mode", "loopback", "--passphrase", passphrase])
-        code, out, err = self._run(args, input_data=plaintext)
+        code, out, err = self._run(args, input_data=plaintext, passphrase=passphrase or None)
         if code == 0:
             return True, out, ""
         return False, "", err or "Clearsigning failed."
@@ -696,11 +707,9 @@ class GPGBackend:
             args.append("--detach-sign")
         else:
             args.append("--clear-sign")
-        if passphrase:
-            args.extend(["--pinentry-mode", "loopback", "--passphrase", passphrase])
         args.append(src_path)
 
-        code, _, err = self._run(args)
+        code, _, err = self._run(args, passphrase=passphrase or None)
         if code == 0:
             return True, f"File signed successfully: {dest_path}"
         return False, err or "File signing failed."
