@@ -82,14 +82,16 @@ uninstall_gpgman() {
         echo -e "  ${GREEN}✓${NC} Removed $DESKTOP_DIR/io.github.smiley_mcsmiles.GPGMan.desktop"
     fi
 
-    if [ -f "$ICON_DIR/gpgman-icon.svg" ]; then
-        rm -f "$ICON_DIR/gpgman-icon.svg"
-        echo -e "  ${GREEN}✓${NC} Removed $ICON_DIR/gpgman-icon.svg"
+    rm -f "$ICON_DIR/gpgman-icon.svg"  # legacy icon name
+    if [ -f "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg" ]; then
+        rm -f "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
+        echo -e "  ${GREEN}✓${NC} Removed $ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
     fi
 
-    if [ -f "$PIXMAPS_DIR/gpgman-icon.svg" ]; then
-        rm -f "$PIXMAPS_DIR/gpgman-icon.svg"
-        echo -e "  ${GREEN}✓${NC} Removed $PIXMAPS_DIR/gpgman-icon.svg"
+    rm -f "$PIXMAPS_DIR/gpgman-icon.svg"  # legacy icon name
+    if [ -f "$PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg" ]; then
+        rm -f "$PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
+        echo -e "  ${GREEN}✓${NC} Removed $PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
     fi
 
     # Remove manpages
@@ -201,9 +203,9 @@ echo -e "  ${GREEN}✓${NC} Created symlinks $BIN_DIR/gpgman and $BIN_DIR/gpgman
 
 # 4. Install desktop icon
 echo -e "${BLUE}==> Installing application icons...${NC}"
-cp "$SCRIPT_DIR/gpgman-icon.svg" "$ICON_DIR/gpgman-icon.svg"
-cp "$SCRIPT_DIR/gpgman-icon.svg" "$PIXMAPS_DIR/gpgman-icon.svg"
-chmod a+r "$ICON_DIR/gpgman-icon.svg" "$PIXMAPS_DIR/gpgman-icon.svg"
+cp "$SCRIPT_DIR/gpgman-icon.svg" "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
+cp "$SCRIPT_DIR/gpgman-icon.svg" "$PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
+chmod a+r "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg" "$PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
 echo -e "  ${GREEN}✓${NC} Installed icons to system icon directories"
 
 # 5. Move/install .desktop file
