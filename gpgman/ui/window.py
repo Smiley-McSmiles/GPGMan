@@ -105,11 +105,8 @@ def _iter_descendants(widget):
 
 
 def _app_icon_name() -> str:
-    """Theme icon named after the app ID when installed (incl. Flatpak), else the bundled one."""
-    display = Gdk.Display.get_default()
-    if display and Gtk.IconTheme.get_for_display(display).has_icon(__app_id__):
-        return __app_id__
-    return "gpgman-icon"
+    """Theme icon name; the icon is installed (or bundled and added to the search path) under the app ID."""
+    return __app_id__
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -282,7 +279,7 @@ class MainWindow(Adw.ApplicationWindow):
             application_icon=_app_icon_name(),
             developer_name="WOOSAH",
             developers=["WOOSAH (Lead Architect)", "Gemini 3.8 (Engineer)"],
-            version="1.3.4",
+            version="1.3.5",
             copyright="© 2026 WOOSAH &amp; Gemini 3.8",
             comments="Dual-Style OpenPGP Cryptographic Suite featuring a modern GTK4 / Libadwaita desktop GUI and 1:1 feature-parity terminal CLI.",
             website="https://github.com/Smiley-McSmiles/GPGMan",

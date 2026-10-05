@@ -14,19 +14,34 @@ from gpgman.gpg_backend import GPGBackend
 def run_gui(argv: list[str]) -> int:
     """Launch the GTK4 / Libadwaita graphical interface."""
     import gi
-    gi.require_version("Gtk", "4.0")
-    gi.require_version("Adw", "1")
-    from gi.repository import Adw, Gio, GLib, Gtk
-    from gpgman.ui.window import MainWindow
-
-    # Match the installed desktop entry (io.github.smiley_mcsmiles.GPGMan.desktop) so the shell
-    # shows the proper name and icon in the dock / task bar.
+    # X11 desktops (Cinnamon, MATE, XFCE, ...) match a window to its launcher / dock entry by
+    # WM_CLASS, which GTK derives from the program name. Set it before GTK is initialised so it
+    # equals the launcher's StartupWMClass (the app ID) instead of "python3" / "main.py".
+    from gi.repository import GLib
     GLib.set_prgname(__app_id__)
     GLib.set_application_name("GPGMan")
-    from gi.repository import Gdk
+
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+    from gi.repository import Adw, Gdk, Gio, Gtk
+    from gpgman.ui.window import MainWindow
+
+    # GTK ignores icons added to a theme dir whose icon-theme.cache is stale (package installs
+    # can leave it that way), which gives a blank window / dock icon. Also search our bundled copy.
     display = Gdk.Display.get_default()
-    has_id_icon = bool(display) and Gtk.IconTheme.get_for_display(display).has_icon(__app_id__)
-    Gtk.Window.set_default_icon_name(__app_id__ if has_id_icon else "gpgman-icon")
+    if display:
+        theme = Gtk.IconTheme.get_for_display(display)
+        if not theme.has_icon(__app_id__):
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            for d in (
+                os.path.join(base_dir, "icons"),
+                "/opt/gpgman/icons",
+                "/usr/local/share/gpgman/icons",
+                "/usr/share/gpgman/icons",
+            ):
+                if os.path.isdir(os.path.join(d, "hicolor")):
+                    theme.add_search_path(d)
+    Gtk.Window.set_default_icon_name(__app_id__)
 
     class GpgManApplication(Adw.Application):
         def __init__(self):

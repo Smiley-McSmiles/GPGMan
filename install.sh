@@ -83,6 +83,9 @@ uninstall_gpgman() {
     fi
 
     rm -f "$ICON_DIR/gpgman-icon.svg"  # legacy icon name
+    for size in 32x32 48x48 64x64 128x128 256x256 512x512; do
+        rm -f "${ICON_DIR%/*/*}/$size/apps/io.github.smiley_mcsmiles.GPGMan.png"
+    done
     if [ -f "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg" ]; then
         rm -f "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
         echo -e "  ${GREEN}✓${NC} Removed $ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
@@ -110,7 +113,7 @@ uninstall_gpgman() {
     fi
 
     if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-        gtk-update-icon-cache -q -t -f "${ICON_DIR%/*/*/*}" 2>/dev/null || true
+        gtk-update-icon-cache -q -t -f "${ICON_DIR%/*/*}" 2>/dev/null || true
     fi
 
     echo -e "${GREEN}${BOLD}✓ GPGMan successfully uninstalled.${NC}"
@@ -126,7 +129,7 @@ fi
 check_root "$@"
 
 echo -e "${BLUE}${BOLD}========================================${NC}"
-echo -e "${BLUE}${BOLD}        GPGMan v1.3.4 Installer ($UNAME_S)      ${NC}"
+echo -e "${BLUE}${BOLD}        GPGMan v1.3.5 Installer ($UNAME_S)      ${NC}"
 echo -e "${BLUE}${BOLD}========================================${NC}"
 
 # Check for required system packages
@@ -206,6 +209,10 @@ echo -e "${BLUE}==> Installing application icons...${NC}"
 cp "$SCRIPT_DIR/gpgman-icon.svg" "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
 cp "$SCRIPT_DIR/gpgman-icon.svg" "$PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
 chmod a+r "$ICON_DIR/io.github.smiley_mcsmiles.GPGMan.svg" "$PIXMAPS_DIR/io.github.smiley_mcsmiles.GPGMan.svg"
+if [ -d "$SCRIPT_DIR/icons/hicolor" ]; then
+    # Raster sizes too, so docks/panels that skip the SVG still find an icon
+    cp -r "$SCRIPT_DIR/icons/hicolor/." "${ICON_DIR%/*/*}/"
+fi
 echo -e "  ${GREEN}✓${NC} Installed icons to system icon directories"
 
 # 5. Move/install .desktop file
@@ -243,7 +250,7 @@ if command -v update-desktop-database >/dev/null 2>&1; then
 fi
 
 if command -v gtk-update-icon-cache >/dev/null 2>&1; then
-    gtk-update-icon-cache -q -t -f "${ICON_DIR%/*/*/*}" 2>/dev/null || true
+    gtk-update-icon-cache -q -t -f "${ICON_DIR%/*/*}" 2>/dev/null || true
     echo -e "  ${GREEN}✓${NC} Updated GTK icon cache"
 fi
 
