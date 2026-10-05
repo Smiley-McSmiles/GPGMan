@@ -105,11 +105,8 @@ def _iter_descendants(widget):
 
 
 def _app_icon_name() -> str:
-    """Theme icon named after the app ID when installed (incl. Flatpak), else the bundled one."""
-    display = Gdk.Display.get_default()
-    if display and Gtk.IconTheme.get_for_display(display).has_icon(__app_id__):
-        return __app_id__
-    return "gpgman-icon"
+    """Theme icon name; the icon is installed (or bundled and added to the search path) under the app ID."""
+    return __app_id__
 
 
 class MainWindow(Adw.ApplicationWindow):
