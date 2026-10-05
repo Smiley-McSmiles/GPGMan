@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <b>A Dual-Style Native OpenPGP Cryptographic Manager for Linux & OpenBSD</b><br>
-  <i>Seamless 1:1 Feature Parity between Modern GTK4 / Libadwaita Desktop GUI and Fast Terminal CLI</i>
+  <b>A native OpenPGP and GnuPG key manager for Linux &amp; OpenBSD</b><br>
+  <i>A modern GTK4 / Libadwaita desktop app and a full terminal CLI, with the same features in both</i>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 ## 🌟 Overview
 
-**GPGMan** is a complete, production-grade OpenPGP and GnuPG manager designed for modern Linux and BSD environments. It offers a **dual-style architecture** with **1:1 complete feature parity**:
+**GPGMan** is a complete, production-grade OpenPGP and GnuPG manager designed for modern Linux and BSD environments. It comes as a desktop app and a command-line tool, and every feature is available in both:
 
 1. **🎨 Graphical User Interface (GUI)**: Built with **GTK4** and **Libadwaita**, adhering strictly to the GNOME Human Interface Guidelines with dark/light theme support, responsive adaptive cards, in-process file selection dialogs, and real-time status banners.
 2. **💻 Command Line Interface (CLI)**: A rich, interactive ANSI-styled terminal application (`gpgman-cli` or `gpgman --cli`) and fully scriptable command suite (`gpgman keys`, `gpgman encrypt-text`, `gpgman encrypt-file`, `gpgman verify`, `gpgman checksum`, etc.) with zero external terminal library dependencies.
@@ -141,7 +141,7 @@ Displays an intuitive ANSI menu:
 ```text
 ================================================================
   🔒 GPGMan CLI v1.3.5 - OpenPGP & GnuPG Suite
-  GUI & CLI Dual-Style OpenPGP Cryptographic Manager
+  GUI & CLI OpenPGP Key Manager
 ================================================================
 
   [ MAIN MENU ]

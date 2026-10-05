@@ -44,7 +44,7 @@ def cprint(text: str, color: str = Colors.RESET, bold: bool = False, end: str = 
 def banner():
     cprint("=" * 64, Colors.CYAN, bold=True)
     cprint(f"  🔒 GPGMan CLI v{__version__} - OpenPGP & GnuPG Suite", Colors.WHITE, bold=True)
-    cprint("  GUI & CLI Dual-Style OpenPGP Cryptographic Manager", Colors.CYAN)
+    cprint("  GUI & CLI OpenPGP Key Manager", Colors.CYAN)
     cprint("=" * 64, Colors.CYAN, bold=True)
 
 
