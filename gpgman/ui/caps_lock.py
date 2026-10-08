@@ -17,8 +17,10 @@ HINT_TEXT = "Caps Lock is on"
 WARN_CLASS = "caps-lock-warning"
 
 _CSS = b"""
-.caps-lock-warning {
-    box-shadow: inset 0 0 0 2px rgba(224, 27, 36, 0.9);
+.caps-lock-warning,
+.caps-lock-warning:focus-within {
+    outline-color: rgb(224, 27, 36);
+    box-shadow: inset 0 0 0 2px rgb(224, 27, 36);
     background-color: rgba(224, 27, 36, 0.10);
     border-radius: 8px;
 }
@@ -54,7 +56,7 @@ def watch_caps_lock(widget: Gtk.Widget, on_change: Callable[[bool], None]) -> No
     last = {"state": None}
 
     def update(*_args):
-        state = bool(keyboard.get_caps_lock_state()) and bool(focus.get_contains_focus())
+        state = bool(keyboard.get_caps_lock_state()) and bool(focus.contains_focus())
         if state != last["state"]:
             last["state"] = state
             if state:
