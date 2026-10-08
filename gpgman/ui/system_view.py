@@ -134,7 +134,7 @@ class SystemView(Gtk.Box):
         # 5. About applet card
         about_group = Adw.PreferencesGroup(title="About GPGMan")
         about_row = Adw.ActionRow(
-            title="GPGMan v1.3.5 (Dual GUI &amp; CLI)",
+            title="GPGMan v1.3.6 (Dual GUI &amp; CLI)",
             subtitle="Lead Architect: WOOSAH · Engineer: Gemini 3.8 · MIT License",
         )
         gh_row = Adw.ActionRow(

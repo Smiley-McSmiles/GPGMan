@@ -12,7 +12,7 @@
 
 set -euo pipefail
 
-VERSION="1.3.5"
+VERSION="1.3.6"
 APP_NAME="gpgman"
 PKG_NAME="gpgman"
 SUMMARY="Dual-style GTK4/Libadwaita GUI and CLI OpenPGP & GnuPG Suite"
@@ -241,6 +241,7 @@ fi
 - Release 1.3.3 adds drag-and-drop key import, .asc file association, and a donation menu in the About dialog.
 - Release 1.3.4 uses the file chooser portal in the Flatpak (no broad filesystem access), renames the app ID to io.github.smiley_mcsmiles.GPGMan, and prepares Flathub submission. Passphrases are now passed to gpg over a private pipe instead of the command line, exported secret keys are saved owner-only, key downloads are size-capped, and cached passphrases are cleared from gpg-agent when the app quits (or from the System tab).
 - Release 1.3.5 fixes the duplicate blank dock icon on Cinnamon and other X11 desktops (window class and bundled app-ID icons) and the installer icon-cache refresh.
+- Release 1.3.6 highlights password fields in red with a "Caps Lock is on" note while Caps Lock is active.
 EOF
 
     if command -v rpmbuild >/dev/null 2>&1; then

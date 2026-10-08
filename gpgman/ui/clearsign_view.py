@@ -17,6 +17,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from gpgman.ui.caps_lock import attach_caps_lock_hint
 from gpgman.gpg_backend import GPGBackend, GPGKey, VerifyResult
 from gpgman.ui.file_chooser import choose_file
 
@@ -135,6 +136,8 @@ class ClearsignView(Gtk.Box):
         key_group.add(self.cs_key_combo)
 
         self.cs_pass_entry = Adw.PasswordEntryRow(title="Signing Passphrase (if password-protected)")
+
+        attach_caps_lock_hint(self.cs_pass_entry)
         self._connect_enter(self.cs_pass_entry, self._on_clearsign_text_clicked)
         key_group.add(self.cs_pass_entry)
         box.append(key_group)
@@ -208,6 +211,8 @@ class ClearsignView(Gtk.Box):
         opt_group.add(self.sign_file_key_combo)
 
         self.sign_file_pass_entry = Adw.PasswordEntryRow(title="Signing Passphrase (if password-protected)")
+
+        attach_caps_lock_hint(self.sign_file_pass_entry)
         self._connect_enter(self.sign_file_pass_entry, self._on_sign_file_clicked)
         opt_group.add(self.sign_file_pass_entry)
 
