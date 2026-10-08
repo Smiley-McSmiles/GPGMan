@@ -49,6 +49,13 @@
     <control>touch</control>
   </supports>
   <releases>
+    <release version="1.3.6" date="2026-10-08">
+      <description>
+        <ul>
+          <li>Password fields are highlighted in red with a "Caps Lock is on" note while Caps Lock is active</li>
+        </ul>
+      </description>
+    </release>
     <release version="1.3.5" date="2026-10-05">
       <description>
         <ul>
