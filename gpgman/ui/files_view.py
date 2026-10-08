@@ -12,6 +12,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from gpgman.ui.caps_lock import attach_caps_lock_hint
 from gpgman.gpg_backend import GPGBackend, GPGKey, VerifyResult
 from gpgman.ui.file_chooser import choose_file
 
@@ -132,6 +133,8 @@ class FilesView(Gtk.Box):
         enc_type_group.add(self.cipher_combo)
 
         self.sym_pass_entry = Adw.PasswordEntryRow(title="Encryption Passphrase")
+
+        attach_caps_lock_hint(self.sym_pass_entry)
         self.sym_pass_entry.set_visible(False)
         self._connect_enter(self.sym_pass_entry, self._on_encrypt_file_clicked)
         enc_type_group.add(self.sym_pass_entry)
@@ -192,6 +195,8 @@ class FilesView(Gtk.Box):
         opt_group.add(self.sign_key_combo)
 
         self.sign_pass_entry = Adw.PasswordEntryRow(title="Signing Passphrase (if key is protected)")
+
+        attach_caps_lock_hint(self.sign_pass_entry)
         self.sign_pass_entry.set_visible(False)
         self._connect_enter(self.sign_pass_entry, self._on_encrypt_file_clicked)
         opt_group.add(self.sign_pass_entry)
@@ -259,6 +264,7 @@ class FilesView(Gtk.Box):
         # 2. Passphrase row for file decryption
         pass_group = Adw.PreferencesGroup(title="Decryption Authorization")
         self.decrypt_pass_entry = Adw.PasswordEntryRow(title="Passphrase (if password-protected)")
+        attach_caps_lock_hint(self.decrypt_pass_entry)
         self._connect_enter(self.decrypt_pass_entry, self._on_decrypt_file_clicked)
         pass_group.add(self.decrypt_pass_entry)
         box.append(pass_group)

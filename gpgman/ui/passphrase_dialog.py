@@ -17,6 +17,8 @@ import gi
 gi.require_version("Gtk", "4.0")
 from gi.repository import Gdk, GLib, Gtk
 
+from gpgman.ui.caps_lock import make_caps_lock_label
+
 
 def is_gnome_session() -> bool:
     """True when running under GNOME (XDG_CURRENT_DESKTOP / DESKTOP_SESSION)."""
@@ -36,7 +38,10 @@ def _prompt_adw(parent, heading, body, on_result) -> bool:
 
     entry = Gtk.PasswordEntry(show_peek_icon=True, activates_default=True)
     entry.set_hexpand(True)
-    dialog.set_extra_child(entry)
+    extra = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    extra.append(entry)
+    extra.append(make_caps_lock_label(entry))
+    dialog.set_extra_child(extra)
     dialog.add_response("cancel", "Cancel")
     dialog.add_response("ok", "Unlock")
     dialog.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
@@ -79,6 +84,7 @@ def _prompt_gtk(parent, heading, body, on_result) -> None:
     entry = Gtk.PasswordEntry(show_peek_icon=True)
     entry.connect("activate", lambda e: finish(e.get_text()))
     box.append(entry)
+    box.append(make_caps_lock_label(entry))
 
     buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8, halign=Gtk.Align.END)
     cancel = Gtk.Button(label="Cancel")

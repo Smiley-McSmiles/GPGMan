@@ -15,6 +15,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
+from gpgman.ui.caps_lock import attach_caps_lock_hint
 from gpgman.gpg_backend import GPGBackend, GPGKey
 from gpgman.ui.dialog_utils import setup_modal_window
 from gpgman.ui.file_chooser import choose_file
@@ -619,6 +620,7 @@ class CreateKeyDialog(Adw.Window):
 
         # Passphrase
         self.pass_entry = Adw.PasswordEntryRow(title="Passphrase (Optional)")
+        attach_caps_lock_hint(self.pass_entry)
         crypto_group.add(self.pass_entry)
 
         box.append(crypto_group)
