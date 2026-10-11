@@ -610,7 +610,7 @@ class CreateKeyDialog(Adw.Window):
         self.exp_value_spin.set_width_chars(5)
         exp_box.append(self.exp_value_spin)
 
-        unit_model = Gtk.StringList.new(["Years", "Months", "Days", "Hours"])
+        unit_model = Gtk.StringList.new(["Years", "Months", "Weeks", "Days"])
         self.exp_unit_dropdown = Gtk.DropDown.new(model=unit_model)
         self.exp_unit_dropdown.set_selected(0)  # Default: Years
         exp_box.append(self.exp_unit_dropdown)
@@ -687,7 +687,7 @@ class CreateKeyDialog(Adw.Window):
         else:
             val = max(1, int(self.exp_value_spin.get_value()))
             unit_idx = self.exp_unit_dropdown.get_selected()
-            unit_codes = {0: "y", 1: "m", 2: "d", 3: "h"}
+            unit_codes = {0: "y", 1: "m", 2: "w", 3: "d"}  # gpg has no hour unit
             code = unit_codes.get(unit_idx, "y")
             expire_str = f"{val}{code}"
 

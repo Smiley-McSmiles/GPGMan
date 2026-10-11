@@ -241,7 +241,7 @@ class GPGManCLI:
         elif exp_choice == "4":
             expire = "0"
         elif exp_choice == "5":
-            expire = input("Enter custom expiration (e.g. 90, 60d, 2y): ").strip() or "1y"
+            expire = input("Enter custom expiration (e.g. 90d, 2w, 6m, 2y): ").strip() or "1y"
         else:
             expire = "1y"
 
@@ -920,7 +920,7 @@ def build_cli_parser() -> argparse.ArgumentParser:
     p_kgen.add_argument("--email", required=True, help="Email address")
     p_kgen.add_argument("--comment", default="", help="Optional comment")
     p_kgen.add_argument("--algo", default="ed25519", choices=["ed25519", "rsa4096", "rsa3072", "rsa2048", "nistp256"], help="Key algorithm")
-    p_kgen.add_argument("--expire", default="1y", help="Expiration (e.g. 1y, 2y, 6m, 0)")
+    p_kgen.add_argument("--expire", default="1y", help="Expiration: 0 (never) or a number with d, w, m or y (e.g. 90d, 6m, 2y)")
     p_kgen.add_argument("--passphrase", default=None, help="Passphrase for secret key")
 
     # key-import

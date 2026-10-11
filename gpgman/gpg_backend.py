@@ -474,6 +474,14 @@ class GPGBackend:
         else:
             expire_str = "0"
 
+        # gpg accepts 0, N, Nd, Nw, Nm, Ny or an ISO date; anything else (e.g. hours) fails
+        # deep inside gpg with a vague "Invalid value", so reject it here with a clear message.
+        if not re.fullmatch(r"0|\d+[dwmy]?|\d{4}-\d{2}-\d{2}|\d{8}(T\d{6})?", expire_str):
+            return False, (
+                f"Invalid expiration '{expire_str}'. Use 0 (never), or a number followed by "
+                "d (days), w (weeks), m (months) or y (years), e.g. 90d, 6m, 2y."
+            )
+
         passphrase_val = passphrase or ""
         cmd_args = []
         primary_usage = "default"
