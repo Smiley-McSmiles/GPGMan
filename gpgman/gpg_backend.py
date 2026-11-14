@@ -16,6 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 CONFIG_DIR = os.path.expanduser("~/.config/gpgman")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "settings.json")
+DEFAULT_PASSWORD_TIMEOUT_MINUTES = 15
+THEMES = ("system", "light", "dark")
 
 
 ALGO_MAP: Dict[str, str] = {
@@ -113,8 +115,32 @@ class GPGBackend:
         saved_bin, saved_home = self._load_settings()
         self.gpg_binary = gpg_binary or saved_bin or shutil.which("gpg") or "/usr/bin/gpg"
         self.gnupg_home = gnupg_home or saved_home or None
+        self.password_timeout_minutes = self._load_password_timeout()
+        self.theme = self._load_theme()
         if not os.path.exists(self.gpg_binary):
             raise FileNotFoundError(f"GPG binary not found at '{self.gpg_binary}'")
+
+    def _load_password_timeout(self) -> int:
+        try:
+            if os.path.exists(CONFIG_FILE):
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    value = json.load(f).get("password_timeout_minutes")
+                if isinstance(value, int) and value >= 0:
+                    return value
+        except Exception:
+            pass
+        return DEFAULT_PASSWORD_TIMEOUT_MINUTES
+
+    def _load_theme(self) -> str:
+        try:
+            if os.path.exists(CONFIG_FILE):
+                with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                    value = json.load(f).get("theme")
+                if value in THEMES:
+                    return value
+        except Exception:
+            pass
+        return "system"
 
     def _load_settings(self) -> Tuple[Optional[str], Optional[str]]:
         try:
@@ -136,11 +162,23 @@ class GPGBackend:
             data = {
                 "gpg_binary": self.gpg_binary,
                 "gnupg_home": self.gnupg_home,
+                "password_timeout_minutes": self.password_timeout_minutes,
+                "theme": self.theme,
             }
             with open(CONFIG_FILE, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except Exception:
             pass
+
+    def set_password_timeout(self, minutes: int) -> None:
+        """Set how many idle minutes pass before password fields are cleared (0 disables)."""
+        self.password_timeout_minutes = max(0, int(minutes))
+        self._save_settings()
+
+    def set_theme(self, theme: str) -> None:
+        """Set the colour scheme: "system", "light" or "dark"."""
+        self.theme = theme if theme in THEMES else "system"
+        self._save_settings()
 
     def set_gpg_binary(self, path: str) -> Tuple[bool, str]:
         """Validate and set a custom GPG binary executable."""
@@ -473,6 +511,14 @@ class GPGBackend:
             expire_str = "0" if expire <= 0 else f"{expire}d"
         else:
             expire_str = "0"
+
+        # gpg accepts 0, N, Nd, Nw, Nm, Ny or an ISO date; anything else (e.g. hours) fails
+        # deep inside gpg with a vague "Invalid value", so reject it here with a clear message.
+        if not re.fullmatch(r"0|\d+[dwmy]?|\d{4}-\d{2}-\d{2}|\d{8}(T\d{6})?", expire_str):
+            return False, (
+                f"Invalid expiration '{expire_str}'. Use 0 (never), or a number followed by "
+                "d (days), w (weeks), m (months) or y (years), e.g. 90d, 6m, 2y."
+            )
 
         passphrase_val = passphrase or ""
         cmd_args = []

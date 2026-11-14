@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, List, Optional
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango
 
 from gpgman.ui.caps_lock import attach_caps_lock_hint
 from gpgman.gpg_backend import GPGBackend, GPGKey
@@ -41,6 +41,19 @@ def _export_secret_with_prompt(parent, backend: GPGBackend, key: GPGKey, finish)
     )
 
 
+def _detail_row(title: str, value: str, copy=None, selectable: bool = False, escape: bool = True) -> Adw.ActionRow:
+    """One labelled line in an expanded key card; ``copy`` is a callable that copies the value."""
+    row = Adw.ActionRow(title=GLib.markup_escape_text(title))
+    row.set_subtitle(GLib.markup_escape_text(value) if escape else value)
+    row.set_subtitle_selectable(selectable)
+    if copy is not None:
+        btn = Gtk.Button(icon_name="edit-copy-symbolic", valign=Gtk.Align.CENTER, tooltip_text="Copy")
+        btn.add_css_class("flat")
+        btn.connect("clicked", lambda _: copy())
+        row.add_suffix(btn)
+    return row
+
+
 class KeysView(Gtk.Box):
     def __init__(self, backend: GPGBackend, window: MainWindow):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=12)
@@ -49,6 +62,7 @@ class KeysView(Gtk.Box):
         self.keys: List[GPGKey] = []
         self.filter_text = ""
         self.filter_mode = "all"  # "all", "secret", "public"
+        self._expanded: set = set()  # fingerprints of the key cards that are rolled open
 
         self.set_margin_top(16)
         self.set_margin_bottom(16)
@@ -105,7 +119,7 @@ class KeysView(Gtk.Box):
         clamp = Adw.Clamp(maximum_size=860)
         self.list_box = Gtk.ListBox()
         self.list_box.set_selection_mode(Gtk.SelectionMode.NONE)
-        self.list_box.add_css_class("boxed-list")
+        self.list_box.add_css_class("key-list")
         clamp.set_child(self.list_box)
         scrolled.set_child(clamp)
         self.stack.add_named(scrolled, "list")
@@ -185,19 +199,55 @@ class KeysView(Gtk.Box):
 
         self.stack.set_visible_child_name("list")
         for k in matched_keys:
-            row = self._create_key_row(k)
-            self.list_box.append(row)
+            self.list_box.append(self._create_key_row(k))
 
-    def _create_key_row(self, key: GPGKey) -> Adw.ActionRow:
-        row = Adw.ActionRow()
-        row.set_activatable(True)
-        row.connect("activated", lambda _: self._show_key_details(key))
+    def _create_key_row(self, key: GPGKey) -> Gtk.ListBoxRow:
+        row = Gtk.ListBoxRow(activatable=False, selectable=False)
+        row.add_css_class("key-card")
+        row.add_css_class("key-secret" if key.is_secret else "key-public")
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        row.set_child(outer)
 
-        # Title: Name or UID
-        title = key.name if key.name else (key.primary_uid if key.primary_uid else f"Key {key.key_id}")
-        row.set_title(GLib.markup_escape_text(title))
+        header = Gtk.Button(hexpand=True)
+        header.add_css_class("flat")
+        header.add_css_class("key-header")
+        outer.append(header)
 
-        # Subtitle: Email, ID, Algo
+        hb = Gtk.Box(spacing=12)
+        header.set_child(hb)
+
+        icon = Gtk.Image.new_from_icon_name("dialog-password-symbolic" if key.is_secret else "channel-insecure-symbolic")
+        icon.add_css_class("key-icon")
+        icon.set_valign(Gtk.Align.CENTER)
+        hb.append(icon)
+
+        mid = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, hexpand=True, valign=Gtk.Align.CENTER)
+        hb.append(mid)
+
+        title_row = Gtk.Box(spacing=8)
+        title = Gtk.Label(
+            label=key.name or key.primary_uid or f"Key {key.key_id}",
+            xalign=0,
+            hexpand=True,
+            ellipsize=Pango.EllipsizeMode.END,
+        )
+        title.add_css_class("heading")
+        title_row.append(title)
+
+        if key.is_secret:
+            badge = Gtk.Label(label="Sec / Pub", valign=Gtk.Align.CENTER)
+            badge.add_css_class("badge-secret")
+        else:
+            badge = Gtk.Label(label="Public", valign=Gtk.Align.CENTER)
+            badge.add_css_class("badge-public")
+        title_row.append(badge)
+
+        if key.is_expired:
+            exp_badge = Gtk.Label(label="Expired", valign=Gtk.Align.CENTER)
+            exp_badge.add_css_class("badge-expired")
+            title_row.append(exp_badge)
+        mid.append(title_row)
+
         sub_parts = []
         if key.email:
             sub_parts.append(key.email)
@@ -207,68 +257,133 @@ class KeysView(Gtk.Box):
             sub_parts.append(f"Expires: {key.expires}")
         elif key.created:
             sub_parts.append(f"Created: {key.created}")
+        sub = Gtk.Label(label=" • ".join(sub_parts), xalign=0, ellipsize=Pango.EllipsizeMode.END)
+        sub.add_css_class("caption")
+        sub.add_css_class("dim-label")
+        mid.append(sub)
 
-        row.set_subtitle(" • ".join(sub_parts))
+        arrow = Gtk.Image(icon_name="pan-down-symbolic", valign=Gtk.Align.CENTER)
+        arrow.add_css_class("key-expand-arrow")
+        hb.append(arrow)
 
-        # Leading icon
-        icon = Gtk.Image.new_from_icon_name("dialog-password-symbolic" if key.is_secret else "channel-insecure-symbolic")
-        icon.add_css_class("accent" if key.is_secret else "dim-label")
-        row.add_prefix(icon)
+        revealer = Gtk.Revealer(transition_type=Gtk.RevealerTransitionType.SLIDE_DOWN, transition_duration=220)
+        outer.append(revealer)
 
-        # Badges
-        badge_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6, valign=Gtk.Align.CENTER)
-        
-        if key.is_secret:
-            sec_badge = Gtk.Label(label="Sec / Pub")
-            sec_badge.add_css_class("badge-secret")
-            badge_box.append(sec_badge)
-        else:
-            pub_badge = Gtk.Label(label="Public")
-            pub_badge.add_css_class("badge-public")
-            badge_box.append(pub_badge)
+        ident = key.fingerprint or key.key_id
 
-        if key.is_expired:
-            exp_badge = Gtk.Label(label="Expired")
-            exp_badge.add_css_class("badge-expired")
-            badge_box.append(exp_badge)
+        def set_expanded(on: bool):
+            if on:
+                self._expanded.add(ident)
+                if revealer.get_child() is None:
+                    # Scroll sideways rather than let the buttons widen the card.
+                    scroll = Gtk.ScrolledWindow(
+                        hscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
+                        vscrollbar_policy=Gtk.PolicyType.NEVER,
+                        propagate_natural_height=True,
+                    )
+                    scroll.set_child(self._build_details(key))
+                    revealer.set_child(scroll)
+            else:
+                self._expanded.discard(ident)
+            (row.add_css_class if on else row.remove_css_class)("expanded")
+            revealer.set_reveal_child(on)
 
-        row.add_suffix(badge_box)
-
-        # Action buttons
-        actions_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4, valign=Gtk.Align.CENTER)
-
-        # Details button
-        details_btn = Gtk.Button(icon_name="document-properties-symbolic")
-        details_btn.set_tooltip_text("View Key Details")
-        details_btn.add_css_class("flat")
-        details_btn.connect("clicked", lambda _: self._show_key_details(key))
-        actions_box.append(details_btn)
-
-        # Export button
-        export_btn = Gtk.Button(icon_name="document-save-symbolic")
-        export_btn.set_tooltip_text("Export Public Key")
-        export_btn.add_css_class("flat")
-        export_btn.connect("clicked", lambda _: self._export_key(key, secret=False))
-        actions_box.append(export_btn)
-
-        # Delete button
-        delete_btn = Gtk.Button(icon_name="user-trash-symbolic")
-        delete_btn.set_tooltip_text("Delete Key")
-        delete_btn.add_css_class("flat")
-        delete_btn.add_css_class("destructive-action")
-        delete_btn.connect("clicked", lambda _: self._confirm_delete_key(key))
-        actions_box.append(delete_btn)
-
-        row.add_suffix(actions_box)
+        header.connect("clicked", lambda _: set_expanded(ident not in self._expanded))
+        set_expanded(ident in self._expanded)
         return row
 
-    def _show_key_details(self, key: GPGKey):
-        dialog = KeyDetailsDialog(
-            self.window,
-            self.backend,
-            key,
-            on_key_updated=lambda: self.window.reload_all_views(notify=False),
+    def _build_details(self, key: GPGKey) -> Gtk.Widget:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        box.add_css_class("key-details")
+
+        bar = Gtk.Box(spacing=6)
+        bar.add_css_class("details-actions")
+        box.append(bar)
+
+        bar.append(self._action_button("document-save-symbolic", "Export Public", lambda: self._export_key(key, secret=False)))
+        if key.is_secret:
+            bar.append(self._action_button("document-save-symbolic", "Export Secret", lambda: self._export_key(key, secret=True)))
+            bar.append(self._action_button("dialog-password-symbolic", "Change Passphrase", lambda: self._change_passphrase(key)))
+        bar.append(Gtk.Box(hexpand=True))
+        bar.append(self._action_button("user-trash-symbolic", "Delete", lambda: self._confirm_delete_key(key), destructive=True))
+
+        lb = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        lb.add_css_class("boxed-list")
+        box.append(lb)
+
+        identity = Adw.ExpanderRow(title="Key Identity")
+        identity.set_expanded(True)
+        identity.add_row(_detail_row("Name", key.name or "N/A"))
+        if key.email:
+            identity.add_row(_detail_row("Email", key.email))
+        if key.comment:
+            identity.add_row(_detail_row("Comment", key.comment))
+        identity.add_row(_detail_row("Key ID", key.key_id, copy=lambda: self._copy_text(key.key_id)))
+        identity.add_row(_detail_row(
+            "Fingerprint",
+            key.formatted_fingerprint or key.fingerprint or "N/A",
+            copy=lambda: self._copy_text(key.fingerprint),
+            selectable=True,
+        ))
+        lb.append(identity)
+
+        technical = Adw.ExpanderRow(title="Technical Properties")
+        technical.add_row(_detail_row(
+            "Key Type",
+            f"{key.algo} ({key.length} bits)" if key.length else key.algo,
+        ))
+        technical.add_row(_detail_row(
+            "Key Nature",
+            "Secret &amp; Public Key (Full Key Pair)" if key.is_secret else "Public Key Only",
+            escape=False,
+        ))
+        technical.add_row(_detail_row("Created", key.created or "Unknown"))
+        technical.add_row(_detail_row("Expires", key.expires or "Never"))
+        technical.add_row(_detail_row("Trust Validity", key.validity))
+        if key.capabilities:
+            technical.add_row(_detail_row("Capabilities", ", ".join(key.capabilities)))
+        lb.append(technical)
+
+        if key.subkeys:
+            subs = Adw.ExpanderRow(title=f"Subkeys ({len(key.subkeys)})")
+            for sub in key.subkeys:
+                subs.add_row(_detail_row(
+                    f"Subkey {sub.key_id}",
+                    f"{sub.algo} {sub.length}b • Caps: {', '.join(sub.capabilities)} • Expires: {sub.expires or 'Never'}",
+                ))
+            lb.append(subs)
+
+        return box
+
+    def _action_button(self, icon: str, label: str, callback, destructive: bool = False) -> Gtk.Button:
+        b = Gtk.Button(valign=Gtk.Align.CENTER)
+        b.set_child(Adw.ButtonContent(icon_name=icon, label=label))
+        b.add_css_class("flat")
+        if destructive:
+            b.add_css_class("destructive-text")
+        b.connect("clicked", lambda _: callback())
+        return b
+
+    def _copy_text(self, text: str):
+        Gdk.Display.get_default().get_clipboard().set(text)
+        self.window.show_toast("Copied to clipboard.")
+
+    def _change_passphrase(self, key: GPGKey):
+        dialog = Adw.MessageDialog(
+            transient_for=self.window,
+            heading="Change Passphrase",
+            body=f"Launch GPG passphrase update for {key.key_id}?\nYour system pinentry or terminal will prompt for the current and new passphrase.",
         )
+        dialog.add_response("cancel", "Cancel")
+        dialog.add_response("continue", "Continue")
+        dialog.set_response_appearance("continue", Adw.ResponseAppearance.SUGGESTED)
+
+        def on_resp(_, resp):
+            if resp == "continue":
+                self.backend.change_passphrase(key.key_id)
+                self.window.show_toast("Passphrase prompt launched.")
+
+        dialog.connect("response", on_resp)
         dialog.present()
 
     def _on_new_key_clicked(self, _):
@@ -347,185 +462,6 @@ class KeysView(Gtk.Box):
                     self.window.show_toast(f"Failed to delete key: {msg}")
 
         dialog.connect("response", on_response)
-        dialog.present()
-
-
-class KeyDetailsDialog(Adw.Window):
-    def __init__(self, parent: Gtk.Window, backend: GPGBackend, key: GPGKey, on_key_updated):
-        super().__init__(transient_for=parent)
-        setup_modal_window(self)
-        self.set_title("Key Details")
-        self.set_default_size(580, 560)
-        self.backend = backend
-        self.key = key
-        self.on_key_updated = on_key_updated
-
-        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        header = Adw.HeaderBar()
-        content.append(header)
-
-        scrolled = Gtk.ScrolledWindow(vexpand=True)
-        clamp = Adw.Clamp(maximum_size=540)
-        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-        box.set_margin_top(16)
-        box.set_margin_bottom(24)
-        box.set_margin_start(16)
-        box.set_margin_end(16)
-
-        # Key Identity Group
-        id_group = Adw.PreferencesGroup(title="Key Identity")
-        
-        name_row = Adw.ActionRow(title="Name", subtitle=self.key.name or "N/A")
-        id_group.add(name_row)
-
-        if self.key.email:
-            email_row = Adw.ActionRow(title="Email", subtitle=self.key.email)
-            id_group.add(email_row)
-
-        if self.key.comment:
-            comment_row = Adw.ActionRow(title="Comment", subtitle=self.key.comment)
-            id_group.add(comment_row)
-
-        # Key ID row with copy button
-        keyid_row = Adw.ActionRow(title="Key ID", subtitle=self.key.key_id)
-        copy_id_btn = Gtk.Button(icon_name="edit-copy-symbolic", valign=Gtk.Align.CENTER)
-        copy_id_btn.add_css_class("flat")
-        copy_id_btn.set_tooltip_text("Copy Key ID")
-        copy_id_btn.connect("clicked", lambda _: self._copy_text(self.key.key_id))
-        keyid_row.add_suffix(copy_id_btn)
-        id_group.add(keyid_row)
-
-        # Fingerprint row with copy button
-        fp_row = Adw.ActionRow(title="Fingerprint")
-        fp_label = Gtk.Label(label=self.key.formatted_fingerprint or self.key.fingerprint or "N/A")
-        fp_label.add_css_class("monospace")
-        fp_label.set_wrap(True)
-        fp_label.set_selectable(True)
-        fp_label.set_halign(Gtk.Align.START)
-        fp_row.set_subtitle(self.key.formatted_fingerprint or self.key.fingerprint or "N/A")
-        
-        copy_fp_btn = Gtk.Button(icon_name="edit-copy-symbolic", valign=Gtk.Align.CENTER)
-        copy_fp_btn.add_css_class("flat")
-        copy_fp_btn.set_tooltip_text("Copy Fingerprint")
-        copy_fp_btn.connect("clicked", lambda _: self._copy_text(self.key.fingerprint))
-        fp_row.add_suffix(copy_fp_btn)
-        id_group.add(fp_row)
-
-        box.append(id_group)
-
-        # Technical Details Group
-        tech_group = Adw.PreferencesGroup(title="Technical Properties")
-        
-        type_row = Adw.ActionRow(
-            title="Key Type",
-            subtitle=f"{self.key.algo} ({self.key.length} bits)" if self.key.length else self.key.algo,
-        )
-        tech_group.add(type_row)
-
-        sec_row = Adw.ActionRow(
-            title="Key Nature",
-            subtitle="Secret &amp; Public Key (Full Key Pair)" if self.key.is_secret else "Public Key Only",
-        )
-        tech_group.add(sec_row)
-
-        created_row = Adw.ActionRow(title="Created", subtitle=self.key.created or "Unknown")
-        tech_group.add(created_row)
-
-        exp_row = Adw.ActionRow(title="Expires", subtitle=self.key.expires or "Never")
-        tech_group.add(exp_row)
-
-        val_row = Adw.ActionRow(title="Trust Validity", subtitle=self.key.validity)
-        tech_group.add(val_row)
-
-        if self.key.capabilities:
-            caps_row = Adw.ActionRow(title="Capabilities", subtitle=", ".join(self.key.capabilities))
-            tech_group.add(caps_row)
-
-        box.append(tech_group)
-
-        # Subkeys Group if present
-        if self.key.subkeys:
-            sub_group = Adw.PreferencesGroup(title=f"Subkeys ({len(self.key.subkeys)})")
-            for sub in self.key.subkeys:
-                sub_row = Adw.ActionRow(
-                    title=f"Subkey {sub.key_id}",
-                    subtitle=f"{sub.algo} {sub.length}b • Caps: {', '.join(sub.capabilities)} • Expires: {sub.expires or 'Never'}",
-                )
-                sub_group.add(sub_row)
-            box.append(sub_group)
-
-        # Action buttons Group
-        act_group = Adw.PreferencesGroup(title="Key Operations")
-        
-        # Export Public
-        exp_pub_row = Adw.ActionRow(title="Export Public Key", subtitle="Export ASCII armored public key")
-        exp_pub_btn = Gtk.Button(label="Export", valign=Gtk.Align.CENTER)
-        exp_pub_btn.connect("clicked", lambda _: self._export(secret=False))
-        exp_pub_row.add_suffix(exp_pub_btn)
-        act_group.add(exp_pub_row)
-
-        # Export Secret (if secret)
-        if self.key.is_secret:
-            exp_sec_row = Adw.ActionRow(
-                title="Export Secret Key",
-                subtitle="Export private key backup (keep secure!)",
-            )
-            exp_sec_btn = Gtk.Button(label="Export Secret", valign=Gtk.Align.CENTER)
-            exp_sec_btn.add_css_class("destructive-action")
-            exp_sec_btn.connect("clicked", lambda _: self._export(secret=True))
-            exp_sec_row.add_suffix(exp_sec_btn)
-            act_group.add(exp_sec_row)
-
-            # Change password
-            pass_row = Adw.ActionRow(title="Change Password", subtitle="Update key passphrase")
-            pass_btn = Gtk.Button(label="Change Passphrase", valign=Gtk.Align.CENTER)
-            pass_btn.connect("clicked", self._change_passphrase)
-            pass_row.add_suffix(pass_btn)
-            act_group.add(pass_row)
-
-        box.append(act_group)
-
-        clamp.set_child(box)
-        scrolled.set_child(clamp)
-        content.append(scrolled)
-        self.set_content(content)
-
-    def _copy_text(self, text: str):
-        clipboard = Gdk.Display.get_default().get_clipboard()
-        clipboard.set(text)
-        if hasattr(self.get_transient_for(), "show_toast"):
-            self.get_transient_for().show_toast("Copied to clipboard.")
-
-    def _export(self, secret: bool):
-        def finish(success: bool, data: str):
-            if not success:
-                if hasattr(self.get_transient_for(), "show_toast"):
-                    self.get_transient_for().show_toast(f"Export failed: {data}")
-                return
-            ExportPreviewDialog(self, self.key, data, secret=secret).present()
-
-        if secret:
-            _export_secret_with_prompt(self, self.backend, self.key, finish)
-        else:
-            finish(*self.backend.export_public_key(self.key.key_id, armor=True))
-
-    def _change_passphrase(self, _):
-        dialog = Adw.MessageDialog(
-            transient_for=self,
-            heading="Change Passphrase",
-            body=f"Launch GPG passphrase update for {self.key.key_id}?\nYour system pinentry or terminal will prompt for the current and new passphrase.",
-        )
-        dialog.add_response("cancel", "Cancel")
-        dialog.add_response("continue", "Continue")
-        dialog.set_response_appearance("continue", Adw.ResponseAppearance.SUGGESTED)
-
-        def on_resp(_, resp):
-            if resp == "continue":
-                self.backend.change_passphrase(self.key.key_id)
-                if hasattr(self.get_transient_for(), "show_toast"):
-                    self.get_transient_for().show_toast("Passphrase prompt launched.")
-
-        dialog.connect("response", on_resp)
         dialog.present()
 
 
@@ -610,7 +546,7 @@ class CreateKeyDialog(Adw.Window):
         self.exp_value_spin.set_width_chars(5)
         exp_box.append(self.exp_value_spin)
 
-        unit_model = Gtk.StringList.new(["Years", "Months", "Days", "Hours"])
+        unit_model = Gtk.StringList.new(["Years", "Months", "Weeks", "Days"])
         self.exp_unit_dropdown = Gtk.DropDown.new(model=unit_model)
         self.exp_unit_dropdown.set_selected(0)  # Default: Years
         exp_box.append(self.exp_unit_dropdown)
@@ -687,7 +623,7 @@ class CreateKeyDialog(Adw.Window):
         else:
             val = max(1, int(self.exp_value_spin.get_value()))
             unit_idx = self.exp_unit_dropdown.get_selected()
-            unit_codes = {0: "y", 1: "m", 2: "d", 3: "h"}
+            unit_codes = {0: "y", 1: "m", 2: "w", 3: "d"}  # gpg has no hour unit
             code = unit_codes.get(unit_idx, "y")
             expire_str = f"{val}{code}"
 

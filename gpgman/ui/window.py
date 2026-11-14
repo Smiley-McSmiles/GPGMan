@@ -21,6 +21,8 @@ from gpgman.ui.messages_view import MessagesView
 from gpgman.ui.system_view import SystemView
 
 
+IDLE_CHECK_SECONDS = 5
+
 APP_CSS = """
 .badge-secret {
     background-color: alpha(@accent_color, 0.18);
@@ -79,6 +81,57 @@ APP_CSS = """
 textview text {
     padding: 8px 10px;
 }
+
+/* ---- key cards (the Keys list; same look as Cascade's torrent cards) ---- */
+list.key-list {
+    background: none;
+    margin: 12px 12px 18px 12px;
+}
+list.key-list > row.key-card {
+    background-color: @card_bg_color;
+    color: @card_fg_color;
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 6, 0.03), 0 1px 3px 1px rgba(0, 0, 6, 0.07), 0 2px 6px 2px rgba(0, 0, 6, 0.03);
+    margin-bottom: 10px;
+    padding: 0;
+}
+list.key-list > row.key-card:focus-visible { outline: 2px solid alpha(@accent_color, 0.5); outline-offset: -2px; }
+
+button.key-header {
+    padding: 12px 10px 12px 14px;
+    border-radius: 12px;
+    min-height: 0;
+}
+row.key-card.expanded button.key-header {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.key-icon {
+    border-radius: 999px;
+    padding: 9px;
+    min-width: 16px;
+    min-height: 16px;
+    background-color: alpha(@accent_bg_color, 0.14);
+    color: @accent_color;
+}
+row.key-public .key-icon {
+    background-color: alpha(@window_fg_color, 0.08);
+    color: alpha(@window_fg_color, 0.6);
+}
+
+.key-expand-arrow {
+    transition: -gtk-icon-transform 200ms ease;
+    color: alpha(@window_fg_color, 0.55);
+}
+row.expanded .key-expand-arrow { -gtk-icon-transform: rotate(-180deg); }
+
+.key-details {
+    padding: 6px 14px 16px 14px;
+    border-top: 1px solid alpha(@borders, 0.6);
+}
+.key-details .details-actions button { padding-left: 10px; padding-right: 10px; }
+.key-details list.boxed-list { background-color: alpha(@window_fg_color, 0.02); }
 """
 
 
@@ -131,8 +184,39 @@ class MainWindow(Adw.ApplicationWindow):
         self.set_default_size(920, 680)
 
         self._apply_css()
+        self.apply_color_scheme()
         self._build_ui()
         self._setup_shortcuts()
+        self._setup_idle_watch()
+
+    def _setup_idle_watch(self):
+        self._last_activity = GLib.get_monotonic_time()
+        self._passwords_cleared = False
+        activity = Gtk.EventControllerLegacy.new()
+        activity.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        activity.connect("event", self._on_activity)
+        self.add_controller(activity)
+        self._idle_source = GLib.timeout_add_seconds(IDLE_CHECK_SECONDS, self._check_idle)
+        self.connect("destroy", lambda _w: GLib.source_remove(self._idle_source))
+
+    def _on_activity(self, _controller, _event) -> bool:
+        self._last_activity = GLib.get_monotonic_time()
+        self._passwords_cleared = False
+        return False
+
+    def _check_idle(self) -> bool:
+        minutes = self.backend.password_timeout_minutes
+        if minutes > 0 and not self._passwords_cleared:
+            idle_us = GLib.get_monotonic_time() - self._last_activity
+            if idle_us >= minutes * 60 * 1_000_000:
+                self.clear_password_fields()
+                self._passwords_cleared = True
+        return True
+
+    def clear_password_fields(self):
+        for widget in _iter_descendants(self):
+            if isinstance(widget, (Adw.PasswordEntryRow, Gtk.PasswordEntry)) and widget.get_text():
+                widget.set_text("")
 
     def _setup_shortcuts(self):
         # Keyboard controller for Ctrl+Q and Ctrl+W
@@ -177,23 +261,11 @@ class MainWindow(Adw.ApplicationWindow):
         title_widget = Adw.ViewSwitcherTitle(stack=self.view_stack, title="GPGMan")
         header.set_title_widget(title_widget)
 
-        # Left / Leading header widgets
-        app_icon = Gtk.Image.new_from_icon_name("dialog-password-symbolic")
-        app_icon.add_css_class("accent")
-        header.pack_start(app_icon)
-
         # Right / Trailing header widgets
         refresh_btn = Gtk.Button(icon_name="view-refresh-symbolic")
         refresh_btn.set_tooltip_text("Refresh all keyrings and views")
         refresh_btn.connect("clicked", lambda _: self.reload_all_views(notify=True))
         header.pack_end(refresh_btn)
-
-        # Theme toggle button
-        self.style_manager = Adw.StyleManager.get_default()
-        theme_btn = Gtk.Button(icon_name="night-light-symbolic")
-        theme_btn.set_tooltip_text("Toggle Dark / Light Theme")
-        theme_btn.connect("clicked", self._toggle_theme)
-        header.pack_end(theme_btn)
 
         # About button
         about_btn = Gtk.Button(icon_name="help-about-symbolic")
@@ -253,11 +325,12 @@ class MainWindow(Adw.ApplicationWindow):
         if notify:
             self.show_toast("Keyrings refreshed.")
 
-    def _toggle_theme(self, _):
-        if self.style_manager.get_dark():
-            self.style_manager.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
-        else:
-            self.style_manager.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+    def apply_color_scheme(self):
+        scheme = {
+            "light": Adw.ColorScheme.FORCE_LIGHT,
+            "dark": Adw.ColorScheme.FORCE_DARK,
+        }.get(self.backend.theme, Adw.ColorScheme.DEFAULT)
+        Adw.StyleManager.get_default().set_color_scheme(scheme)
 
     def _show_about(self, _):
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -279,7 +352,7 @@ class MainWindow(Adw.ApplicationWindow):
             application_icon=_app_icon_name(),
             developer_name="WOOSAH",
             developers=["WOOSAH (Lead Architect)", "Gemini 3.8 (Engineer)"],
-            version="1.3.6",
+            version="1.3.7",
             copyright="© 2026 WOOSAH &amp; Gemini 3.8",
             comments="Dual-Style OpenPGP Cryptographic Suite featuring a modern GTK4 / Libadwaita desktop GUI and 1:1 feature-parity terminal CLI.",
             website="https://github.com/Smiley-McSmiles/GPGMan",
