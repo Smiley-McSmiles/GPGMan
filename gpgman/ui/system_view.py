@@ -18,6 +18,8 @@ from gpgman.ui.file_chooser import choose_file
 if TYPE_CHECKING:
     from gpgman.ui.window import MainWindow
 
+THEME_KEYS = ["system", "light", "dark"]
+
 
 class SystemView(Gtk.Box):
     def __init__(self, backend: GPGBackend, window: MainWindow):
@@ -39,6 +41,18 @@ class SystemView(Gtk.Box):
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         box.set_margin_top(8)
         box.set_margin_bottom(24)
+
+        # 0. Appearance
+        appearance_group = Adw.PreferencesGroup(title="Appearance")
+        self.theme_row = Adw.ComboRow(
+            title="Theme",
+            subtitle="Light or dark colours, or follow the system setting",
+            model=Gtk.StringList.new(["Follow System", "Light", "Dark"]),
+        )
+        self.theme_row.set_selected(THEME_KEYS.index(self.backend.theme))
+        self.theme_row.connect("notify::selected", self._on_theme_changed)
+        appearance_group.add(self.theme_row)
+        box.append(appearance_group)
 
         # 1. GPG System Configuration
         sys_group = Adw.PreferencesGroup(
@@ -131,10 +145,22 @@ class SystemView(Gtk.Box):
 
         box.append(maint_group)
 
-        # 5. About applet card
+        # 5. Security
+        security_group = Adw.PreferencesGroup(title="Security")
+
+        self.pw_timeout_row = Adw.SpinRow.new_with_range(0, 1440, 1)
+        self.pw_timeout_row.set_title("Clear Password Fields After Inactivity")
+        self.pw_timeout_row.set_subtitle("Minutes without activity before passphrase fields are emptied (0 = never)")
+        self.pw_timeout_row.set_value(self.backend.password_timeout_minutes)
+        self.pw_timeout_row.connect("notify::value", self._on_password_timeout_changed)
+        security_group.add(self.pw_timeout_row)
+
+        box.append(security_group)
+
+        # 6. About applet card
         about_group = Adw.PreferencesGroup(title="About GPGMan")
         about_row = Adw.ActionRow(
-            title="GPGMan v1.3.6 (Dual GUI &amp; CLI)",
+            title="GPGMan v1.3.7 (Dual GUI &amp; CLI)",
             subtitle="Lead Architect: WOOSAH · Engineer: Gemini 3.8 · MIT License",
         )
         gh_row = Adw.ActionRow(
@@ -177,6 +203,13 @@ class SystemView(Gtk.Box):
             clipboard = Gdk.Display.get_default().get_clipboard()
             clipboard.set(text)
             self.window.show_toast("Copied to clipboard.")
+
+    def _on_theme_changed(self, row, _):
+        self.backend.set_theme(THEME_KEYS[row.get_selected()])
+        self.window.apply_color_scheme()
+
+    def _on_password_timeout_changed(self, row, _):
+        self.backend.set_password_timeout(int(row.get_value()))
 
     def _on_reload_agent(self, _):
         ok, msg = self.backend.clear_agent_cache()
